@@ -1,0 +1,1 @@
+-- TODO add CRUD operations like in user.sql -> run "make sqlc"
