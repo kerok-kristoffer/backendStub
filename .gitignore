@@ -1,0 +1,10 @@
+.idea/dataSources.xml
+.idea/sqldialects.xml
+.idea/vcs.xml
+bin/
+db/sqlc/db.go
+db/sqlc/models.go
+db/sqlc/user.sql.go
+go.sum
+go1.17.7.linux-amd64.tar.gz
+pkg/
