@@ -19,7 +19,8 @@ OFFSET $2;
 -- name: UpdateUserName :exec
 UPDATE users
 SET full_name = $2
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: UpdateUserHash :one
 UPDATE users

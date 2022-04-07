@@ -2,14 +2,14 @@ CREATE TABLE "users" (
                          "id" bigserial PRIMARY KEY,
                          "full_name" varchar NOT NULL,
                          "hash" varchar(50) NOT NULL,
-                         "created_at" timestamptz NOT NULL DEFAULT 'now()'
+                         "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "ingredients" (
                                "id" bigserial PRIMARY KEY,
                                "name" varchar NOT NULL,
                                "user_id" bigint,
-                               "created_at" timestamptz NOT NULL DEFAULT 'now()'
+                               "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "units" (
@@ -18,14 +18,14 @@ CREATE TABLE "units" (
                          "ingredient_id" bigint,
                          "amount" float8 NOT NULL,
                          "measure" varchar,
-                         "created_at" timestamptz NOT NULL DEFAULT 'now()'
+                         "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "stocks" (
                           "id" bigserial PRIMARY KEY,
                           "unit_id" bigint,
                           "cost" float8 NOT NULL,
-                          "created_at" timestamptz NOT NULL DEFAULT 'now()'
+                          "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE "ingredients" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");

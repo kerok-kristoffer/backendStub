@@ -16,4 +16,7 @@ migratedown:
 sqlc:
 	sqlc generate
 
+test:#TODO figure out issue with "go directory outside available modules"  something with running go build -o, but I haven't solved it yet...
+	go test -v -cover ./...
+
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc
