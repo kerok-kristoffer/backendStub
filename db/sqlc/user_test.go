@@ -9,15 +9,13 @@ import (
 	"time"
 )
 
-var F = faker.New()
-
 func TestCreateUser(t *testing.T) {
 
-	createRandomUser(t)
+	CreateRandomUser(t)
 	// add test for hash not
 }
 
-func createRandomUser(t *testing.T) User {
+func CreateRandomUser(t *testing.T) User {
 
 	arg := CreateUserParams{
 		FullName: F.Person().Name(),
@@ -37,7 +35,7 @@ func createRandomUser(t *testing.T) User {
 }
 
 func TestGetUser(t *testing.T) {
-	user1 := createRandomUser(t)
+	user1 := CreateRandomUser(t)
 	user2, err := testQueries.GetUser(context.Background(), user1.ID)
 
 	require.NoError(t, err)
@@ -52,7 +50,7 @@ func TestGetUser(t *testing.T) {
 
 func TestUpdateUser(t *testing.T) {
 
-	user1 := createRandomUser(t)
+	user1 := CreateRandomUser(t)
 
 	// todo Add test for update UserName after running migration, currently UpdateUserName does not return anything
 	f := faker.New()
@@ -72,7 +70,7 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	user1 := createRandomUser(t)
+	user1 := CreateRandomUser(t)
 	err := testQueries.DeleteUser(context.Background(), user1.ID)
 	require.NoError(t, err)
 
@@ -85,7 +83,7 @@ func TestDeleteUser(t *testing.T) {
 
 func TestListUsers(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		createRandomUser(t)
+		CreateRandomUser(t)
 	}
 	arg := ListUsersParams{
 		Limit:  5,

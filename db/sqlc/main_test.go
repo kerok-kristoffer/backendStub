@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"github.com/jaswdr/faker"
 	"log"
 	"os"
 	"testing"
@@ -15,6 +16,7 @@ const (
 )
 
 var testQueries *Queries
+var F = faker.New()
 
 func TestMain(m *testing.M) {
 	// todo: Add test files for the rest of the models
