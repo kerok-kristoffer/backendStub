@@ -19,6 +19,7 @@ var testQueries *Queries
 var F = faker.New()
 
 func TestMain(m *testing.M) {
+	// todo: Add models for Recipies and Inventory
 	// todo: Add test files for the rest of the models
 	conn, err := sql.Open(dbDriver, dbSource)
 
