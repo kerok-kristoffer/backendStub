@@ -23,6 +23,9 @@ jobs:
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
+      sqlc:
+        image: kjconroy/sqlc
+
     steps:
       - name: Set up Go
         uses: actions/setup-go@v3
