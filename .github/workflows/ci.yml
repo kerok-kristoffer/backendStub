@@ -39,11 +39,8 @@ jobs:
       - name: Tidy
         run: go mod tidy
 
-      - name: Install Sqlc
-        run: docker pull kjconroy/sqlc
-
       - name: Sqlc
-        run: make sqlc
+        run: sqlc generate
 
       - name: Test
         run: make test
