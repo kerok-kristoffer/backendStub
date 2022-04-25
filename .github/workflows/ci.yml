@@ -21,7 +21,7 @@ jobs:
 
       - name: Get dependencies
         run: |
-          go get -t github.com/kerokris/formulating/db/sqlc
+          go get -t github.com/jaswdr/faker
 
       - name: Test
         run: make test
