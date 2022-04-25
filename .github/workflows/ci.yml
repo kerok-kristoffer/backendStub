@@ -23,9 +23,6 @@ jobs:
         # needed because the postgres container does not provide a healthcheck
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-      sqlc:
-        image: kjconroy/sqlc
-
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v3
@@ -38,6 +35,9 @@ jobs:
 
       - name: Tidy
         run: go mod tidy
+
+      - name: Install Sqlc
+        run: docker pull kjconroy/sqlc
 
       - name: Sqlc
         run: make sqlc
