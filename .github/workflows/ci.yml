@@ -23,8 +23,8 @@ jobs:
         run: |
           go get -t github.com/jaswdr/faker
 
-      - name: Build
-        run: go build -v .
+      - name: Sqlc
+        run: make sqlc
 
       - name: Test
         run: make test
