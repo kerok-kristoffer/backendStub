@@ -23,7 +23,8 @@ func TestCreateIngredient(t *testing.T) {
 }
 
 func TestGetIngredient(t *testing.T) {
-	ingredient1 := createRandomIngredient(t, 1)
+	user := CreateRandomUser(t)
+	ingredient1 := createRandomIngredient(t, user.ID)
 
 	ingredient2, err := testQueries.GetIngredient(context.Background(), ingredient1.ID)
 
@@ -35,7 +36,9 @@ func TestGetIngredient(t *testing.T) {
 
 	require.WithinDurationf(t, ingredient1.CreatedAt, ingredient2.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
 
-	err = testQueries.DeleteIngredient(context.Background(), 1)
+	err = testQueries.DeleteIngredient(context.Background(), ingredient2.ID)
+	require.NoError(t, err)
+	err = testQueries.DeleteUser(context.Background(), user.ID)
 	require.NoError(t, err)
 }
 
@@ -83,7 +86,7 @@ func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split
 
 func createRandomIngredient(t *testing.T, userId int64) Ingredient {
 
-	arg := CreateIngredientParams{
+	arg := CreateIngredientParams{ // TODO run migrations locally, error in ci!
 		Name:   F.Food().Vegetable(),
 		UserID: sql.NullInt64{Int64: userId, Valid: true},
 	}

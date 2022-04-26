@@ -51,7 +51,6 @@ func TestUpdateUser(t *testing.T) {
 
 	user1 := CreateRandomUser(t)
 
-	// todo Add test for update UserName after running migration, currently UpdateUserName does not return anything
 	userHashParams := UpdateUserHashParams{
 		ID:   user1.ID,
 		Hash: F.Hash().MD5(),
