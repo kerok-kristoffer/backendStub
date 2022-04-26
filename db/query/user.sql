@@ -16,7 +16,7 @@ ORDER BY id
 LIMIT $1
 OFFSET $2;
 
--- name: UpdateUserName :exec
+-- name: UpdateUserName :one
 UPDATE users
 SET full_name = $2
 WHERE id = $1

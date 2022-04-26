@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -43,7 +42,6 @@ func TestGetIngredient(t *testing.T) {
 func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split test methods "should..."
 	user := CreateRandomUser(t)
 	for i := 0; i < 10; i++ {
-		fmt.Print(i+1, ": ")
 		createRandomIngredient(t, user.ID)
 	}
 
@@ -56,7 +54,6 @@ func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split
 
 	require.NoError(t, err)
 	require.Len(t, ingredients, 5)
-	fmt.Println("ingredients:")
 	for _, ingredient := range ingredients {
 		require.NotEmpty(t, ingredient)
 	}
@@ -69,12 +66,8 @@ func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split
 
 	ingredientsByUserId, err := testQueries.ListIngredientsByUserId(context.Background(), params)
 	require.Len(t, ingredientsByUserId, 5)
-	fmt.Println("ingredientsByUserIdAmount", len(ingredientsByUserId))
-	count := 1
 	for _, ingredientByUserId := range ingredientsByUserId {
 		require.NotEmpty(t, ingredientByUserId)
-		fmt.Println(count, ingredientByUserId)
-		count++
 	}
 
 	err = testQueries.DeleteIngredientByUserId(context.Background(), sql.NullInt64{
@@ -92,7 +85,7 @@ func createRandomIngredient(t *testing.T, userId int64) Ingredient {
 
 	arg := CreateIngredientParams{
 		Name:   F.Food().Vegetable(),
-		UserID: userId,
+		UserID: sql.NullInt64{Int64: userId, Valid: true},
 	}
 
 	ing, err := testQueries.CreateIngredient(context.Background(), arg)
@@ -100,7 +93,6 @@ func createRandomIngredient(t *testing.T, userId int64) Ingredient {
 	require.NoError(t, err)
 	require.NotEmpty(t, ing)
 	require.Equal(t, arg.Name, ing.Name)
-	fmt.Println(ing.Name)
 	require.Equal(t, userId, ing.UserID.Int64)
 
 	require.NotZero(t, ing.UserID)
