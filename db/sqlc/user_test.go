@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"github.com/jaswdr/faker"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -53,20 +52,32 @@ func TestUpdateUser(t *testing.T) {
 	user1 := CreateRandomUser(t)
 
 	// todo Add test for update UserName after running migration, currently UpdateUserName does not return anything
-	f := faker.New()
-	arg := UpdateUserHashParams{
+	userHashParams := UpdateUserHashParams{
 		ID:   user1.ID,
-		Hash: f.Hash().MD5(),
+		Hash: F.Hash().MD5(),
 	}
 
-	user2, err := testQueries.UpdateUserHash(context.Background(), arg)
+	user2, err := testQueries.UpdateUserHash(context.Background(), userHashParams)
 	require.NoError(t, err)
 	require.NotEmpty(t, user2)
 
 	require.Equal(t, user1.ID, user2.ID)
 	require.Equal(t, user1.FullName, user2.FullName)
-	require.Equal(t, arg.Hash, user2.Hash)
+	require.Equal(t, userHashParams.Hash, user2.Hash)
 	require.WithinDurationf(t, user1.CreatedAt, user2.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
+
+	userNameParams := UpdateUserNameParams{
+		ID:       user1.ID,
+		FullName: F.Person().Name(),
+	}
+
+	user3, err := testQueries.UpdateUserName(context.Background(), userNameParams)
+	require.NoError(t, err)
+	require.NotEmpty(t, user3)
+	require.Equal(t, user2.ID, user3.ID)
+	require.Equal(t, user2.Hash, user3.Hash)
+	require.Equal(t, userNameParams.FullName, user3.FullName)
+	require.WithinDurationf(t, user2.CreatedAt, user3.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
 }
 
 func TestDeleteUser(t *testing.T) {

@@ -21,7 +21,7 @@ INSERT INTO ingredients (
 
 type CreateIngredientParams struct {
 	Name   string        `json:"name"`
-	UserID int64 `json:"userID"`
+	UserID sql.NullInt64 `json:"userID"`
 }
 
 func (q *Queries) CreateIngredient(ctx context.Context, arg CreateIngredientParams) (Ingredient, error) {
