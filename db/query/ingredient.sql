@@ -23,7 +23,7 @@ SELECT * FROM ingredients
     LIMIT $2
     OFFSET $3;
 
--- name: UpdateIngredientName :exec
+-- name: UpdateIngredientName :one
 UPDATE ingredients
 SET name = $2
 WHERE id = $1
@@ -33,7 +33,7 @@ RETURNING *;
 DELETE FROM ingredients
 WHERE id = $1;
 
--- name: DeleteIngredientByUserId :exec
+-- name: DeleteIngredientsByUserId :exec
 DELETE FROM ingredients
 WHERE user_id = $1;
 

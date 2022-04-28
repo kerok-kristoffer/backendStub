@@ -9,13 +9,6 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-
-	CreateRandomUser(t)
-	// add test for hash not
-}
-
-func CreateRandomUser(t *testing.T) User {
-
 	arg := CreateUserParams{
 		FullName: F.Person().Name(),
 		Hash:     F.Hash().MD5(),
@@ -29,6 +22,17 @@ func CreateRandomUser(t *testing.T) User {
 
 	require.NotZero(t, user.ID)
 	require.NotZero(t, user.CreatedAt)
+}
+
+func CreateRandomUser(t *testing.T) User {
+
+	arg := CreateUserParams{
+		FullName: F.Person().Name(),
+		Hash:     F.Hash().MD5(),
+	}
+	user, err := testQueries.CreateUser(context.Background(), arg)
+
+	require.NoError(t, err)
 
 	return user
 }
@@ -44,10 +48,20 @@ func TestGetUser(t *testing.T) {
 	require.Equal(t, user1.FullName, user2.FullName)
 	require.Equal(t, user1.Hash, user2.Hash)
 	require.WithinDurationf(t, user1.CreatedAt, user2.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
-
 }
 
-func TestUpdateUser(t *testing.T) {
+func TestDeleteUser(t *testing.T) {
+	user1 := CreateRandomUser(t)
+	err := testQueries.DeleteUser(context.Background(), user1.ID)
+	require.NoError(t, err)
+
+	user2, err := testQueries.GetUser(context.Background(), user1.ID)
+	require.Error(t, err)
+	require.EqualError(t, err, sql.ErrNoRows.Error())
+	require.Empty(t, user2)
+}
+
+func TestUpdateUserHash(t *testing.T) {
 
 	user1 := CreateRandomUser(t)
 
@@ -64,31 +78,23 @@ func TestUpdateUser(t *testing.T) {
 	require.Equal(t, user1.FullName, user2.FullName)
 	require.Equal(t, userHashParams.Hash, user2.Hash)
 	require.WithinDurationf(t, user1.CreatedAt, user2.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
+}
+
+func TestUpdateUserName(t *testing.T) {
+	user1 := CreateRandomUser(t)
 
 	userNameParams := UpdateUserNameParams{
 		ID:       user1.ID,
 		FullName: F.Person().Name(),
 	}
 
-	user3, err := testQueries.UpdateUserName(context.Background(), userNameParams)
+	user2, err := testQueries.UpdateUserName(context.Background(), userNameParams)
 	require.NoError(t, err)
-	require.NotEmpty(t, user3)
-	require.Equal(t, user2.ID, user3.ID)
-	require.Equal(t, user2.Hash, user3.Hash)
-	require.Equal(t, userNameParams.FullName, user3.FullName)
-	require.WithinDurationf(t, user2.CreatedAt, user3.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
-}
-
-func TestDeleteUser(t *testing.T) {
-	user1 := CreateRandomUser(t)
-	err := testQueries.DeleteUser(context.Background(), user1.ID)
-	require.NoError(t, err)
-
-	user2, err := testQueries.GetUser(context.Background(), user1.ID)
-	require.Error(t, err)
-	require.EqualError(t, err, sql.ErrNoRows.Error())
-	require.Empty(t, user2)
-
+	require.NotEmpty(t, user2)
+	require.Equal(t, user1.ID, user2.ID)
+	require.Equal(t, user1.Hash, user2.Hash)
+	require.Equal(t, userNameParams.FullName, user2.FullName)
+	require.WithinDurationf(t, user1.CreatedAt, user2.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
 }
 
 func TestListUsers(t *testing.T) {
@@ -106,5 +112,4 @@ func TestListUsers(t *testing.T) {
 	for _, user := range users {
 		require.NotEmpty(t, user)
 	}
-
 }

@@ -10,6 +10,30 @@ import (
 
 func TestCreateIngredient(t *testing.T) {
 	user := CreateRandomUser(t)
+
+	arg := CreateIngredientParams{
+		Name:   F.Food().Vegetable(),
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
+	}
+
+	ing, err := testQueries.CreateIngredient(context.Background(), arg)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, ing)
+	require.Equal(t, arg.Name, ing.Name)
+	require.Equal(t, user.ID, ing.UserID.Int64)
+
+	require.NotZero(t, ing.UserID)
+	require.NotZero(t, ing.CreatedAt)
+
+	err = testQueries.DeleteIngredient(context.Background(), ing.ID)
+	require.NoError(t, err)
+	err = testQueries.DeleteUser(context.Background(), user.ID)
+	require.NoError(t, err)
+}
+
+func TestDeleteIngredientWithConstraint(t *testing.T) {
+	user := CreateRandomUser(t)
 	ingredient := createRandomIngredient(t, user.ID)
 
 	err := testQueries.DeleteUser(context.Background(), user.ID) // todo kerok - Update below to more reliable catch of error if message changes?
@@ -17,6 +41,10 @@ func TestCreateIngredient(t *testing.T) {
 
 	err = testQueries.DeleteIngredient(context.Background(), ingredient.ID)
 	require.NoError(t, err)
+	ingredient, err = testQueries.GetIngredient(context.Background(), user.ID)
+	require.Error(t, err)
+	require.EqualError(t, err, sql.ErrNoRows.Error())
+	require.Empty(t, ingredient)
 
 	err = testQueries.DeleteUser(context.Background(), user.ID)
 	require.NoError(t, err)
@@ -42,7 +70,28 @@ func TestGetIngredient(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split test methods "should..."
+func TestUpdateIngredientName(t *testing.T) {
+
+	user := CreateRandomUser(t)
+	ingredient := createRandomIngredient(t, user.ID)
+
+	params := UpdateIngredientNameParams{
+		ID:   ingredient.ID,
+		Name: F.Food().Vegetable(),
+	}
+
+	updatedIngredient, err := testQueries.UpdateIngredientName(context.Background(), params)
+	require.NoError(t, err)
+	require.NotEmpty(t, updatedIngredient)
+
+	require.Equal(t, updatedIngredient, ingredient)
+	require.Equal(t, updatedIngredient.Name, params.Name)
+	require.Equal(t, updatedIngredient.UserID, ingredient.UserID)
+	require.WithinDuration(t, updatedIngredient.CreatedAt, ingredient.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
+
+}
+
+func TestListIngredients(t *testing.T) {
 	user := CreateRandomUser(t)
 	for i := 0; i < 10; i++ {
 		createRandomIngredient(t, user.ID)
@@ -73,7 +122,7 @@ func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split
 		require.NotEmpty(t, ingredientByUserId)
 	}
 
-	err = testQueries.DeleteIngredientByUserId(context.Background(), sql.NullInt64{
+	err = testQueries.DeleteIngredientsByUserId(context.Background(), sql.NullInt64{
 		Int64: user.ID, Valid: true,
 	})
 	require.NoError(t, err)
@@ -81,25 +130,16 @@ func TestListIngredients(t *testing.T) { // todo kerok - organize tests in split
 	shouldBeEmptyIngredientsByUserId, err := testQueries.ListIngredientsByUserId(context.Background(), params)
 	require.NoError(t, err)
 	require.Empty(t, shouldBeEmptyIngredientsByUserId)
-
 }
 
 func createRandomIngredient(t *testing.T, userId int64) Ingredient {
 
-	arg := CreateIngredientParams{ // TODO run migrations locally, error in ci!
+	arg := CreateIngredientParams{
 		Name:   F.Food().Vegetable(),
 		UserID: sql.NullInt64{Int64: userId, Valid: true},
 	}
 
 	ing, err := testQueries.CreateIngredient(context.Background(), arg)
-
 	require.NoError(t, err)
-	require.NotEmpty(t, ing)
-	require.Equal(t, arg.Name, ing.Name)
-	require.Equal(t, userId, ing.UserID.Int64)
-
-	require.NotZero(t, ing.UserID)
-	require.NotZero(t, ing.CreatedAt)
-
 	return ing
 }
