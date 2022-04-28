@@ -46,13 +46,13 @@ func (q *Queries) DeleteIngredient(ctx context.Context, id int64) error {
 	return err
 }
 
-const deleteIngredientByUserId = `-- name: DeleteIngredientByUserId :exec
+const deleteIngredientsByUserId = `-- name: DeleteIngredientsByUserId :exec
 DELETE FROM ingredients
 WHERE user_id = $1
 `
 
-func (q *Queries) DeleteIngredientByUserId(ctx context.Context, userID sql.NullInt64) error {
-	_, err := q.db.ExecContext(ctx, deleteIngredientByUserId, userID)
+func (q *Queries) DeleteIngredientsByUserId(ctx context.Context, userID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, deleteIngredientsByUserId, userID)
 	return err
 }
 
@@ -155,7 +155,7 @@ func (q *Queries) ListIngredientsByUserId(ctx context.Context, arg ListIngredien
 	return items, nil
 }
 
-const updateIngredientName = `-- name: UpdateIngredientName :exec
+const updateIngredientName = `-- name: UpdateIngredientName :one
 UPDATE ingredients
 SET name = $2
 WHERE id = $1
@@ -167,7 +167,14 @@ type UpdateIngredientNameParams struct {
 	Name string `json:"name"`
 }
 
-func (q *Queries) UpdateIngredientName(ctx context.Context, arg UpdateIngredientNameParams) error {
-	_, err := q.db.ExecContext(ctx, updateIngredientName, arg.ID, arg.Name)
-	return err
+func (q *Queries) UpdateIngredientName(ctx context.Context, arg UpdateIngredientNameParams) (Ingredient, error) {
+	row := q.db.QueryRowContext(ctx, updateIngredientName, arg.ID, arg.Name)
+	var i Ingredient
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.UserID,
+		&i.CreatedAt,
+	)
+	return i, err
 }
