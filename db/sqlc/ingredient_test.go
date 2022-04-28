@@ -84,7 +84,7 @@ func TestUpdateIngredientName(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedIngredient)
 
-	require.Equal(t, updatedIngredient, ingredient)
+	require.Equal(t, updatedIngredient.ID, ingredient.ID)
 	require.Equal(t, updatedIngredient.Name, params.Name)
 	require.Equal(t, updatedIngredient.UserID, ingredient.UserID)
 	require.WithinDuration(t, updatedIngredient.CreatedAt, ingredient.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
