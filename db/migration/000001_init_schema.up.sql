@@ -28,6 +28,21 @@ CREATE TABLE "stocks" (
                           "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "transfers" (
+                        "id" bigserial PRIMARY KEY,
+                        "from_user_id" bigint,
+                        "to_user_id" bigint,
+                        "amount" bigint,
+                        "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "entries" (
+                        "id" bigserial PRIMARY KEY,
+                        "user_id" bigint,
+                        "amount" bigint,
+                        "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE "ingredients" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 ALTER TABLE "units" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
@@ -35,6 +50,12 @@ ALTER TABLE "units" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "units" ADD FOREIGN KEY ("ingredient_id") REFERENCES "ingredients" ("id");
 
 ALTER TABLE "stocks" ADD FOREIGN KEY ("unit_id") REFERENCES "units" ("id");
+
+ALTER TABLE "transfers" ADD FOREIGN KEY ("from_user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "transfers" ADD FOREIGN KEY ("to_user_id") REFERENCES "users" ("id");
+
+ALTER TABLE "entries" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 
 CREATE INDEX ON "users" ("full_name");
 
