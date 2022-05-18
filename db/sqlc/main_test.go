@@ -17,16 +17,19 @@ const (
 
 var testQueries *Queries
 var F = faker.New()
+var testDB *sql.DB
 
 func TestMain(m *testing.M) {
 	// todo: Add models for Recipies and Inventory
 	// todo: Add test files for the rest of the models
-	conn, err := sql.Open(dbDriver, dbSource)
+	var err error
+
+	testDB, err = sql.Open(dbDriver, dbSource)
 
 	if err != nil {
 		log.Fatalln("Cannot connect to db", err)
 	}
-	testQueries = New(conn)
+	testQueries = New(testDB)
 
 	os.Exit(m.Run())
 }
