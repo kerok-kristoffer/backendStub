@@ -6,21 +6,26 @@ import (
 	"fmt"
 )
 
-type UserAccount struct {
+type UserAccount interface { // todo kerok - rename class at some point?
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+
+type SQLUserAccount struct {
 	// todo corresponds to store in tut
 	*Queries
 	db *sql.DB
 }
 
-func NewUserAccount(db *sql.DB) *UserAccount {
-	return &UserAccount{
+func NewUserAccount(db *sql.DB) UserAccount {
+	return &SQLUserAccount{
 		db:      db,
 		Queries: New(db),
 	}
 }
 
 // DB transaction execution example, not in use currently
-func (userAccount *UserAccount) execTx(ctx context.Context, fn func(*Queries) error) error {
+func (userAccount *SQLUserAccount) execTx(ctx context.Context, fn func(*Queries) error) error {
 	tx, err := userAccount.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -52,7 +57,7 @@ type TransferTxResult struct {
 	ToEntry    Entry    `json:"toEntry"`
 }
 
-func (userAccount *UserAccount) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
+func (userAccount *SQLUserAccount) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 	// TODO kerok - trying out transactions, no current need in project, keep for future reference example
 	err := userAccount.execTx(ctx, func(q *Queries) error {
