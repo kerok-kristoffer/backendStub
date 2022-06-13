@@ -23,7 +23,7 @@ server:
 	go run main.go
 
 mock:
-	mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
+	mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
 
 
 .PHONY: postgres createdb dropdb migrateup migratedown sqlc test server mock

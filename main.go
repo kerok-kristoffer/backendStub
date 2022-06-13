@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
-	"github.com/kerok-kristoffer/backendStub/util"
+	"github.com/kerok-kristoffer/formulating/util"
 	"log"
 
-	"github.com/kerok-kristoffer/backendStub/api"
-	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
+	"github.com/kerok-kristoffer/formulating/api"
+	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 	_ "github.com/lib/pq"
 )
 
