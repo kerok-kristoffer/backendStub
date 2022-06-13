@@ -91,7 +91,7 @@ func (q *Queries) ListIngredients(ctx context.Context, arg ListIngredientsParams
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Ingredient{}
+	var items []Ingredient
 	for rows.Next() {
 		var i Ingredient
 		if err := rows.Scan(
@@ -133,7 +133,7 @@ func (q *Queries) ListIngredientsByUserId(ctx context.Context, arg ListIngredien
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Ingredient{}
+	var items []Ingredient
 	for rows.Next() {
 		var i Ingredient
 		if err := rows.Scan(

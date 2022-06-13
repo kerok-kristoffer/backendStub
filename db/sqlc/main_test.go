@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"github.com/jaswdr/faker"
-	"github.com/kerok-kristoffer/backendStub/util"
+	"github.com/kerok-kristoffer/formulating/util"
 	"log"
 	"os"
 	"testing"
