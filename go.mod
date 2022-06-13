@@ -1,4 +1,4 @@
-module github.com/kerok-kristoffer/formulating
+module github.com/kerok-kristoffer/backendStub
 
 go 1.17
 

@@ -8,6 +8,8 @@ db/sqlc/user.sql.go
 db/sqlc/ingredient.sql.go
 db/sqlc/transfer.sql.go
 db/sqlc/entry.sql.go
+db/sqlc/querier.go
+db/mock/
 go.sum
 go1.17.7.linux-amd64.tar.gz
 pkg/
