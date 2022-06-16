@@ -40,7 +40,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install mockgen
-        run: go install github.com/golang/mock/mockgen@v1.6.0
+        run: |
+          export PATH=$PATH:~/go/bin
+          go install github.com/golang/mock/mockgen@v1.6.0
 
       - name: Generate mockgen UserAccount
         run: mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
