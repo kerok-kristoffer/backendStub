@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+// These are not really applicable to my current purposes,
+// only followed tut for some example golang coding
 func TestTransferTx(t *testing.T) {
 	userAccount := NewUserAccount(testDB)
 

@@ -2,6 +2,8 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 )
 
@@ -13,6 +15,15 @@ type Server struct {
 func NewServer(userAccount db.UserAccount) *Server {
 	server := &Server{userAccount: userAccount}
 	router := gin.Default()
+
+	// adds validator "currency" to api calls according tut #14, not actually used at the moment.
+	// unit tests for api from #14 are on tut maker's github
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		err := v.RegisterValidation("currency", validCurrency)
+		if err != nil {
+			return nil
+		}
+	}
 
 	router.POST("/users", server.createUser)
 	router.GET("/users/:id", server.getUserAccount)
