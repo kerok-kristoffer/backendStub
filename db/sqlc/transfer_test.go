@@ -73,7 +73,14 @@ func TestTransferTx(t *testing.T) {
 		require.NoError(t, err)
 
 		// TODO check account balances
+		err = userAccount.DeleteTransfer(context.Background(), transfer.ID)
+		require.NoError(t, err)
 
+		err = userAccount.DeleteEntry(context.Background(), fromEntry.ID)
+		require.NoError(t, err)
+		err = userAccount.DeleteEntry(context.Background(), toEntry.ID)
+		require.NoError(t, err)
 	}
-
+	DeleteUser(t, user1)
+	DeleteUser(t, user2)
 }

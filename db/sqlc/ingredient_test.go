@@ -13,6 +13,7 @@ func TestCreateIngredient(t *testing.T) {
 
 	arg := CreateIngredientParams{
 		Name:   F.Food().Vegetable(),
+		Hash:   F.Hash().MD5(),
 		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 	}
 
@@ -89,6 +90,10 @@ func TestUpdateIngredientName(t *testing.T) {
 	require.Equal(t, updatedIngredient.UserID, ingredient.UserID)
 	require.WithinDuration(t, updatedIngredient.CreatedAt, ingredient.CreatedAt, time.Second, "Error, created_at timestamps not within 1sec")
 
+	err = testQueries.DeleteIngredient(context.Background(), ingredient.ID)
+	require.NoError(t, err)
+	err = testQueries.DeleteUser(context.Background(), user.ID)
+	require.NoError(t, err)
 }
 
 func TestListIngredients(t *testing.T) {
@@ -118,8 +123,9 @@ func TestListIngredients(t *testing.T) {
 
 	ingredientsByUserId, err := testQueries.ListIngredientsByUserId(context.Background(), params)
 	require.Len(t, ingredientsByUserId, 5)
-	for _, ingredientByUserId := range ingredientsByUserId {
-		require.NotEmpty(t, ingredientByUserId)
+	for _, ingredient := range ingredientsByUserId {
+		require.NotEmpty(t, ingredient)
+		require.Equal(t, ingredient.UserID.Int64, user.ID)
 	}
 
 	err = testQueries.DeleteIngredientsByUserId(context.Background(), sql.NullInt64{
@@ -130,12 +136,16 @@ func TestListIngredients(t *testing.T) {
 	shouldBeEmptyIngredientsByUserId, err := testQueries.ListIngredientsByUserId(context.Background(), params)
 	require.NoError(t, err)
 	require.Empty(t, shouldBeEmptyIngredientsByUserId)
+
+	err = testQueries.DeleteUser(context.Background(), user.ID)
+	require.NoError(t, err)
 }
 
 func createRandomIngredient(t *testing.T, userId int64) Ingredient {
 
 	arg := CreateIngredientParams{
 		Name:   F.Food().Vegetable(),
+		Hash:   F.Hash().MD5(),
 		UserID: sql.NullInt64{Int64: userId, Valid: true},
 	}
 

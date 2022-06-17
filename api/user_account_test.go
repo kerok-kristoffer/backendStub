@@ -102,6 +102,7 @@ func TestGetUserAccountAPI(t *testing.T) {
 			tc.checkResponse(t, recorder)
 		})
 	}
+
 }
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {

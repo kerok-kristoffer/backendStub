@@ -9,3 +9,7 @@ INSERT INTO entries (
 -- name: GetEntryByUserId :one
 SELECT * FROM entries
 WHERE user_id = $1 LIMIT 1;
+
+-- name: DeleteEntry :exec
+DELETE FROM entries
+WHERE id = $1;

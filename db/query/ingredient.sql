@@ -1,9 +1,10 @@
 -- name: CreateIngredient :one
 INSERT INTO ingredients (
                         name,
+                        hash,
                         user_id
 ) VALUES (
-          $1, $2
+          $1, $2, $3
          ) RETURNING *;
 
 -- name: GetIngredient :one
