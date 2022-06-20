@@ -9,6 +9,7 @@ import (
 	"github.com/jaswdr/faker"
 	mockdb "github.com/kerok-kristoffer/formulating/db/mock"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
+	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
@@ -17,7 +18,9 @@ import (
 )
 
 func TestGetUserAccountAPI(t *testing.T) {
-	user := randomUser()
+	user, err := randomUser()
+
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name          string
@@ -102,7 +105,6 @@ func TestGetUserAccountAPI(t *testing.T) {
 			tc.checkResponse(t, recorder)
 		})
 	}
-
 }
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
@@ -115,11 +117,18 @@ func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	require.Equal(t, user, gotUser)
 }
 
-func randomUser() db.User {
+func randomUser() (db.User, error) {
 	f := faker.New()
+	hashedPassword, err := util.HashPassword(f.Internet().Password())
+	if err != nil {
+		return db.User{}, err
+	}
+
 	return db.User{
 		ID:       f.Int64(),
+		UserName: f.Internet().User(),
+		Email:    f.Internet().Email(),
 		FullName: f.Person().Name(),
-		Hash:     f.Hash().MD5(),
-	}
+		Hash:     hashedPassword,
+	}, nil
 }
