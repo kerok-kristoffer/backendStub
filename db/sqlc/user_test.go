@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -33,9 +34,12 @@ func TestCreateUser(t *testing.T) {
 
 func CreateRandomUser(t *testing.T) User {
 
+	hashedPassword, err := util.HashPassword(F.Internet().Password())
+	require.NoError(t, err)
+
 	arg := CreateUserParams{
 		FullName: F.Person().Name(),
-		Hash:     F.Hash().MD5(),
+		Hash:     hashedPassword,
 		UserName: F.Internet().User(),
 		Email:    F.Internet().Email(),
 	}
@@ -160,7 +164,7 @@ func TestUpdateUserName(t *testing.T) {
 }
 
 func TestListUsers(t *testing.T) {
-	createdUsers := []User{}
+	var createdUsers []User
 
 	for i := 0; i < 10; i++ {
 		createdUsers = append(createdUsers, CreateRandomUser(t))

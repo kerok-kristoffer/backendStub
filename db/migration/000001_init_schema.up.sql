@@ -1,9 +1,9 @@
 CREATE TABLE "users" (
                          "id" bigserial PRIMARY KEY,
-                         "user_name" varchar NOT NULL,
-                         "email" varchar NOT NULL,
+                         "user_name" varchar UNIQUE NOT NULL,
+                         "email" varchar UNIQUE NOT NULL,
                          "full_name" varchar NOT NULL,
-                         "hash" varchar(50) NOT NULL,
+                         "hash" varchar(60) NOT NULL,
                          "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
