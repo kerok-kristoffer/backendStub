@@ -6,7 +6,10 @@ import (
 	"fmt"
 )
 
-type UserAccount interface { // todo kerok - rename class at some point?
+// UserAccount Interface representing SQL and Mock version
+// Mock is generated as per below automatically in Makefile
+//go:generate mockgen -package mockdb -destination ../mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
+type UserAccount interface { // todo kerok - rename interface at some point?
 	Querier
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 }

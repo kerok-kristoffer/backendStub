@@ -18,6 +18,7 @@ func NewServer(userAccount db.UserAccount) *Server {
 
 	// adds validator "currency" to api calls according tut #14, not actually used at the moment.
 	// unit tests for api from #14 are on tut maker's github
+	// could add validator for units (g, l, oz, etc) at a later point, so saving as template
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		err := v.RegisterValidation("currency", validCurrency)
 		if err != nil {

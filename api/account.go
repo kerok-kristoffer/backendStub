@@ -15,6 +15,7 @@ type getUserRequest struct {
 }
 
 func (server *Server) getUserAccount(ctx *gin.Context) {
+	// todo kerok - refactor this and server.go - concept of UserAccount from tut might not fit my purposes?
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
