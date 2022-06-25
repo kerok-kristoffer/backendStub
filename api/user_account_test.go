@@ -94,7 +94,7 @@ func TestCreateUserAPI(t *testing.T) {
 			account := mockdb.NewMockUserAccount(controller)
 			tc.buildStubs(account)
 
-			server := NewServer(account)
+			server := NewTestServer(t, account)
 			recorder := httptest.NewRecorder()
 
 			data, err := json.Marshal(tc.body)
@@ -187,7 +187,7 @@ func TestGetUserAccountAPI(t *testing.T) {
 			account := mockdb.NewMockUserAccount(controller)
 			tc.buildStubs(account)
 
-			server := NewServer(account)
+			server := NewTestServer(t, account)
 			recorder := httptest.NewRecorder()
 
 			url := fmt.Sprintf("/users/%d", tc.userId)

@@ -73,11 +73,20 @@ type createUserRequest struct {
 	Password string `json:"password" binding:"required,min=6"`
 }
 
-type createUserResponse struct {
+type userResponse struct {
 	UserName  string    `json:"userName" binding:"required,alphanum"`
 	Email     string    `json:"email" binding:"required,email"`
 	FullName  string    `json:"fullName" binding:"required"`
 	CreatedAt time.Time `json:"created_at" binding:"required"`
+}
+
+func newUserResponse(user db.User) userResponse {
+	return userResponse{
+		UserName:  user.UserName,
+		Email:     user.Email,
+		FullName:  user.FullName,
+		CreatedAt: user.CreatedAt,
+	}
 }
 
 func (server Server) createUser(ctx *gin.Context) {
@@ -115,11 +124,55 @@ func (server Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	userResponse := createUserResponse{
-		UserName:  user.UserName,
-		Email:     user.Email,
-		FullName:  user.FullName,
-		CreatedAt: user.CreatedAt,
+	ctx.JSON(http.StatusOK, newUserResponse(user))
+}
+
+type loginUserRequest struct {
+	UserName string `json:"userName" binding:"required,alphanum"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type loginUserResponse struct {
+	AccessToken string       `json:"access_token"`
+	User        userResponse `json:"user"`
+}
+
+func (server *Server) loginUser(ctx *gin.Context) {
+	var req loginUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
-	ctx.JSON(http.StatusOK, userResponse)
+
+	user, err := server.userAccount.GetUserByUserName(ctx, req.UserName) // todo add support for login by email
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	err = util.CheckPassword(req.Password, user.Hash)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	accessToken, err := server.tokenMaker.CreateToken(
+		user.UserName,
+		server.config.AccessTokenDuration,
+	)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	response := loginUserResponse{
+		AccessToken: accessToken,
+		User:        newUserResponse(user),
+	}
+	ctx.JSON(http.StatusOK, response)
+
 }
