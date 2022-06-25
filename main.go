@@ -23,7 +23,10 @@ func main() {
 	}
 
 	account := db.NewUserAccount(conn)
-	server := api.NewServer(account)
+	server, err := api.NewServer(config, account)
+	if err != nil {
+		log.Fatalln("cannot create server:", err)
+	}
 
 	err = server.Start(config.ServerAddress)
 
