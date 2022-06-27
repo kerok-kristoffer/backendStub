@@ -10,6 +10,7 @@ import (
 	"github.com/jaswdr/faker"
 	mockdb "github.com/kerok-kristoffer/formulating/db/mock"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
+	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type eqCreateUserParamsMatcher struct {
@@ -118,12 +120,16 @@ func TestGetUserAccountAPI(t *testing.T) {
 	testCases := []struct {
 		name          string
 		userId        int64
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(userAccount *mockdb.MockUserAccount)
 		checkResponse func(t *testing.T, recorder *httptest.ResponseRecorder)
 	}{
 		{
 			name:   "OK",
 			userId: user.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.UserName, time.Minute)
+			},
 			buildStubs: func(account *mockdb.MockUserAccount) {
 				account.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.ID)).
@@ -138,6 +144,9 @@ func TestGetUserAccountAPI(t *testing.T) {
 		{
 			name:   "NotFound",
 			userId: user.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.UserName, time.Minute)
+			},
 			buildStubs: func(account *mockdb.MockUserAccount) {
 				account.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.ID)).
@@ -151,6 +160,9 @@ func TestGetUserAccountAPI(t *testing.T) {
 		{
 			name:   "InternalError",
 			userId: user.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.UserName, time.Minute)
+			},
 			buildStubs: func(account *mockdb.MockUserAccount) {
 				account.EXPECT().
 					GetUser(gomock.Any(), gomock.Eq(user.ID)).
@@ -164,6 +176,9 @@ func TestGetUserAccountAPI(t *testing.T) {
 		{
 			name:   "InvalidId",
 			userId: 0,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.UserName, time.Minute)
+			},
 			buildStubs: func(account *mockdb.MockUserAccount) {
 				account.EXPECT().
 					GetUser(gomock.Any(), gomock.Any()).
@@ -171,6 +186,36 @@ func TestGetUserAccountAPI(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			},
+		},
+		{
+			name:   "UnauthorizedUser",
+			userId: user.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, "unauthorized_user", time.Minute)
+			},
+			buildStubs: func(account *mockdb.MockUserAccount) {
+				account.EXPECT().
+					GetUser(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(user, nil)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			},
+		},
+		{
+			name:   "NoAuthorization",
+			userId: user.ID,
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+			},
+			buildStubs: func(account *mockdb.MockUserAccount) {
+				account.EXPECT().
+					GetUser(gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
 			},
 		},
 		// TODO: add more cases
@@ -192,13 +237,16 @@ func TestGetUserAccountAPI(t *testing.T) {
 
 			url := fmt.Sprintf("/users/%d", tc.userId)
 			request, err := http.NewRequest(http.MethodGet, url, nil)
-
 			require.NoError(t, err)
+
+			tc.setupAuth(t, request, server.tokenMaker)
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(t, recorder)
 		})
 	}
 }
+
+// todo kerok - implement test for listUsers route after implementing admin middleware and listUsers api endpoint
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	data, err := ioutil.ReadAll(body)

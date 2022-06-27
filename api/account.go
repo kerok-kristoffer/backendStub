@@ -2,8 +2,10 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gin-gonic/gin"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
+	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/lib/pq"
 	"net/http"
@@ -16,6 +18,9 @@ type getUserRequest struct {
 
 func (server *Server) getUserAccount(ctx *gin.Context) {
 	// todo kerok - refactor this and server.go - concept of UserAccount from tut might not fit my purposes?
+	// in tut#22, at around 18m, implement corresponding middleware authentication for routes listing ingredients, recipes, etc. (instead of accounts like in tut)
+	// listing users might use a different middleware for admin, etc.
+	// could add a listFollowers or listFriends when adding social media functionality to site.
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -29,6 +34,13 @@ func (server *Server) getUserAccount(ctx *gin.Context) {
 			return
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	if user.UserName != authPayload.Username {
+		err := errors.New("not authenticated user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -137,14 +149,14 @@ type loginUserResponse struct {
 	User        userResponse `json:"user"`
 }
 
-func (server *Server) loginUser(ctx *gin.Context) {
+func (server *Server) loginUser(ctx *gin.Context) { // todo kerok - add tests for login api endpoint
 	var req loginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	user, err := server.userAccount.GetUserByUserName(ctx, req.UserName) // todo add support for login by email
+	user, err := server.userAccount.GetUserByUserName(ctx, req.UserName) // todo kerok - add support for login by email
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))

@@ -48,8 +48,13 @@ func (server *Server) setupRouter() {
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)
 
-	router.GET("/users/:id", server.getUserAccount)
-	router.GET("/users", server.listUsers)
+	userAuthRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
+	userAuthRoutes.GET("/:id", server.getUserAccount)
+	// todo kerok - implement routes for ingredients/recipes
+
+	// todo kerok - implement separate middleware for admins
+	adminRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
+	adminRoutes.GET("/", server.listUsers)
 
 	server.router = router
 }
