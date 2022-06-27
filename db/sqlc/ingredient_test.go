@@ -120,6 +120,14 @@ func TestListIngredients(t *testing.T) {
 		Limit:  5,
 		Offset: 5,
 	}
+	// for tut regarding this, I think I will skip implementing a middleware for ingredients,
+	// ingredients should only be accessible from the user owning them, and user should already be behind middleware
+	// I could implement private/public ingredients/recipes and could handle visibility while sharing with friends
+	// using a "Friend" viewModel that only contains "public" recipes.
+
+	// actually thinking about this for a bit, I would like my front end to be more modular than receiving the whole
+	//user VM-object along with its recipes and ingredients, having a middleware makes sense in that
+	//context since we might want to send requests for the ingredients only from that module on the page
 
 	ingredientsByUserId, err := testQueries.ListIngredientsByUserId(context.Background(), params)
 	require.Len(t, ingredientsByUserId, 5)
