@@ -32,4 +32,4 @@ generate:
 	go generate ./...
 
 
-.PHONY: postgres createdb dropdb migrateup migratedown sqlc test server generate
+.PHONY: postgres createdb dropdb migrateup migratedown migrateup1 migratedown1 sqlc test server generate
