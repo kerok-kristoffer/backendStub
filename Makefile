@@ -1,5 +1,5 @@
 postgres:
-	docker run --name postgres12 --network formulating -p 5454:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=eloh -d postgres:12-alpine
+	docker run --name postgres12 --network formulating -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=eloh -d postgres:12-alpine
 
 createdb:
 	docker exec -it postgres12 createdb --username=root --owner=root formulating
@@ -8,16 +8,16 @@ dropdb:
 	docker exec -it postgres12 dropdb formulating
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:eloh@localhost:5454/formulating?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose up
 
 migrateup1:
-	migrate -path db/migration -database "postgresql://root:eloh@localhost:5454/formulating?sslmode=disable" -verbose up 1
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:eloh@localhost:5454/formulating?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose down
 
 migratedown1:
-	migrate -path db/migration -database "postgresql://root:eloh@localhost:5454/formulating?sslmode=disable" -verbose down 1
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate
