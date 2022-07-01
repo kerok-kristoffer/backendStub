@@ -11,6 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18.3
+        id: go
+
       - name: Check out code
         uses: actions/checkout@v2
 
@@ -31,8 +37,7 @@ jobs:
           REPOSITORY: formulating
           IMAGE_TAG: ${{ github.sha }}
 
-        run: |
-          go mod edit -go=1.18
+        run: |m
           go mod tidy
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
