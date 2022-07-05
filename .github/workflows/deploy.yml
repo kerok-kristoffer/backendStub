@@ -20,6 +20,24 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
+      - name: Install Sqlc
+        run: go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+
+      - name: Generate Sqlc
+        run: sqlc generate
+
+      - name: Install mockgen
+        run: go install github.com/golang/mock/mockgen@v1.6.0
+
+      - name: Generate mockgen UserAccount
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go mod download github.com/golang/mock
+          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
+
+      - name: Tidy
+        run: go mod tidy
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
