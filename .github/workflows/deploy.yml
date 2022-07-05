@@ -56,6 +56,5 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
 
         run: |
-          go mod tidy
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
