@@ -1,12 +1,10 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/jaswdr/faker"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/stretchr/testify/require"
-	"os"
 	"testing"
 	"time"
 )
@@ -21,10 +19,4 @@ func NewTestServer(t *testing.T, account db.UserAccount) *Server {
 	server, err := NewServer(config, account)
 	require.NoError(t, err)
 	return server
-}
-
-func TestMain(m *testing.M) {
-
-	gin.SetMode(gin.TestMode)
-	os.Exit(m.Run())
 }
