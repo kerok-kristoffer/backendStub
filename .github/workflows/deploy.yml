@@ -35,6 +35,9 @@ jobs:
           go mod download github.com/golang/mock
           mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
 
+      - name: Give -x access to start script
+        run: chmod +x start.sh
+
       - name: Tidy
         run: go mod tidy
 
