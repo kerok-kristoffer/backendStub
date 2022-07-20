@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: formulating-api-deployment
+  labels:
+    app: formulating-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: formulating-api
+  template:
+    metadata:
+      labels:
+        app: formulating-api
+    spec:
+      containers:
+        - name: formulating-api
+          image: 862881304980.dkr.ecr.eu-north-1.amazonaws.com/formulating:bb80a6d62d74d51b63f88cce760948602afc0e5c
+          ports:
+            - containerPort: 8080
