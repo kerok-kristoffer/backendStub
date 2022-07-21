@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
         - name: formulating-api
-          image: 862881304980.dkr.ecr.eu-north-1.amazonaws.com/formulating:eab42302fd015d13c81ef0ec02360581a5f23960
+          image: 862881304980.dkr.ecr.eu-north-1.amazonaws.com/formulating:e8a87c400405f8d380ca7b50d5469fc1f22904d3
           ports:
             - containerPort: 8080
