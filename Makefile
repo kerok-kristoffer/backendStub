@@ -8,16 +8,16 @@ dropdb:
 	docker exec -it postgres12 dropdb formulating
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:admin1234%&@formulating.c88yhjcbemef.eu-north-1.rds.amazonaws.com:5432/formulating" -verbose up
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose up
 
 migrateup1:
-	migrate -path db/migration -database "postgresql://root:admin1234%&@formulating.c88yhjcbemef.eu-north-1.rds.amazonaws.com:5432/formulating" -verbose up 1
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose up 1
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:admin1234%&@formulating.c88yhjcbemef.eu-north-1.rds.amazonaws.com:5432/formulating" -verbose down
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose down
 
 migratedown1:
-	migrate -path db/migration -database "postgresql://root:admin1234%&@formulating.c88yhjcbemef.eu-north-1.rds.amazonaws.com:5432/formulating" -verbose down 1
+	migrate -path db/migration -database "postgresql://root:eloh@localhost:5432/formulating?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate
