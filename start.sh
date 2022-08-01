@@ -3,7 +3,7 @@
 set -e
 
 echo "run db migration"
-/app/migrate -path /app/migration -database "postgresql://root:admin123456@formulating.c88yhjcbemef.eu-north-1.rds.amazonaws.com:5432/formulating" -verbose up
+/app/migrate -path /app/migration -database "$DB_SOURCE" -verbose up
 
 echo "start app"
 exec "$@"
