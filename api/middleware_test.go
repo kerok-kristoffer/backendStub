@@ -19,10 +19,10 @@ func addAuthorization(
 	username string,
 	duration time.Duration,
 ) {
-	token, err := tokenMaker.CreateToken(username, duration)
+	testToken, err := tokenMaker.CreateToken(username, duration)
 	require.NoError(t, err)
 
-	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, token)
+	authorizationHeader := fmt.Sprintf("%s %s", authorizationType, testToken)
 	request.Header.Set(authorizationHeaderKey, authorizationHeader)
 }
 func TestAuthMiddleware(t *testing.T) {

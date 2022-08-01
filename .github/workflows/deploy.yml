@@ -11,8 +11,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18.3
+        id: go
+
       - name: Check out code
         uses: actions/checkout@v2
+
+      - name: Install Sqlc
+        run: go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+
+      - name: Generate Sqlc
+        run: sqlc generate
+
+      - name: Install mockgen
+        run: go install github.com/golang/mock/mockgen@v1.6.0
+
+      - name: Generate mockgen UserAccount
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          go mod download github.com/golang/mock
+          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
+
+      - name: Give -x access to start script
+        run: chmod +x start.sh
+
+      - name: Tidy
+        run: go mod tidy
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -32,6 +59,5 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
 
         run: |
-          go mod tidy
           docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
