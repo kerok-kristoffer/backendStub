@@ -41,6 +41,7 @@ func NewServer(config util.Config, userAccount db.UserAccount) (*Server, error) 
 			return nil, err
 		}
 	}
+	gin.SetMode(gin.ReleaseMode)
 	server.setupRouter()
 	return server, nil
 }
