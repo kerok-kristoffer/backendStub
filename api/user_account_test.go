@@ -5,6 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/jaswdr/faker"
@@ -13,12 +20,6 @@ import (
 	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/kerok-kristoffer/formulating/util"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"reflect"
-	"testing"
-	"time"
 )
 
 type eqCreateUserParamsMatcher struct {
@@ -247,6 +248,8 @@ func TestGetUserAccountAPI(t *testing.T) {
 }
 
 // todo kerok - implement test for listUsers route after implementing admin middleware and listUsers api endpoint
+
+// todo kerok - add api tests for ingredient routes
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	data, err := ioutil.ReadAll(body)

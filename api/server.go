@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,7 @@ import (
 type Server struct {
 	config      util.Config
 	userAccount db.UserAccount
+	ingredients db.Ingredient
 	router      *gin.Engine
 	tokenMaker  token.Maker
 }
@@ -53,6 +55,8 @@ func (server *Server) setupRouter() {
 	userAuthRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
 	userAuthRoutes.GET("/:id", server.getUserAccount)
 	// todo kerok - implement routes for ingredients/recipes
+	userAuthRoutes.POST("/ingredients", server.addIngredient)
+	userAuthRoutes.GET("/ingredients", server.listIngredients)
 
 	// todo kerok - implement separate middleware for admins
 	adminRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
