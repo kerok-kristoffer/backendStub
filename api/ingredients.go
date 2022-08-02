@@ -66,11 +66,12 @@ func (server Server) addIngredient(ctx *gin.Context) {
 	}
 
 	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
 
 	arg := db.CreateIngredientParams{
 		Name:   req.Name,
 		Hash:   "", // todo kerok - remove parameter from Sqlc generator
-		UserID: sql.NullInt64{Int64: int64(authPayLoad.ID.ID()), Valid: true},
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 	}
 
 	ingredient, err := server.userAccount.CreateIngredient(ctx, arg)
