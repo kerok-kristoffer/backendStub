@@ -22,9 +22,14 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 	}
 
 	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
 	arg := db.ListIngredientsByUserIdParams{
-		UserID: sql.NullInt64{Int64: int64(authPayLoad.ID.ID()), Valid: true},
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 		Limit:  req.PageSize,
 		Offset: (req.PageId - 1) * req.PageSize,
 	}
