@@ -41,9 +41,9 @@ jobs:
       run: go mod tidy
 
     - name: Install kubectl
-      uses: azure/setup-kubectl@v1
+      uses: azure/setup-kubectl@v3
       with:
-        version: '1.24.3'
+        version: 'v1.24.3'
       id: install
 
     - name: Configure AWS credentials
