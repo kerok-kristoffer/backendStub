@@ -45,15 +45,25 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, ingredients)
+	ctx.JSON(http.StatusOK, makeViewModel(ingredients))
+}
+
+func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
+	var viewModelIngredients []ingredientResponse
+	for i := range ingredients {
+		viewModelIngredients[i] = ingredientResponse{
+			Name: ingredients[i].Name,
+		}
+	}
+	return viewModelIngredients
 }
 
 type addIngredientRequest struct {
-	Name string `json:"Name" binding:"required,alphanum"`
+	Name string `json:"Name" binding:"required"`
 }
 
 type ingredientResponse struct {
-	Name string `json:"Name" binding:"required,alphanum"`
+	Name string `json:"Name" binding:"required"`
 }
 
 func newIngredientResponse(ingredient db.Ingredient) ingredientResponse {
