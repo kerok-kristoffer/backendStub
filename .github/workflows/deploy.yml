@@ -7,7 +7,7 @@ on:
 jobs:
 
   build:
-    name: Build Image
+    name: Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -41,6 +41,12 @@ jobs:
       - name: Tidy
         run: go mod tidy
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: '1.24.3'
+        id: install
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -62,5 +68,13 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
 
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t latest .
+          docker push -a $REGISTRY/$REPOSITORY
+
+      -name: Deploy Image to AWS EKS
+        run: |
+          kubectl apply -f eks/aws-auth.yaml
+          kubectl apply -f eks/deployment.yaml
+          kubectl apply -f eks/service.yaml
+          kubectl apply -f eks/issuer.yaml
+          kubectl apply -f eks/ingress.yaml
