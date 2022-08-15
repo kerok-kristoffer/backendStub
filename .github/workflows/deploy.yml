@@ -73,6 +73,9 @@ jobs:
     - name: Update kube config
       run: aws eks update-kubeconfig --name formulating --region eu-north-1
 
+    - name: Update kube config
+      run: aws eks update-kubeconfig --name formulating --region eu-north-1
+
     - name: Deploy Image to AWS EKS
       run: |
         kubectl apply -f eks/aws-auth.yaml
