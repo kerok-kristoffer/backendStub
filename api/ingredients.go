@@ -11,7 +11,7 @@ import (
 
 type listIngredientsRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=20"`
 }
 
 func (server *Server) listIngredients(ctx *gin.Context) {
@@ -48,8 +48,8 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, makeViewModel(ingredients))
 }
 
-func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
-	var viewModelIngredients []ingredientResponse
+func makeViewModel(ingredients []db.Ingredient) [20]ingredientResponse {
+	var viewModelIngredients [20]ingredientResponse
 	for i := range ingredients {
 		viewModelIngredients[i] = ingredientResponse{
 			Name: ingredients[i].Name,
