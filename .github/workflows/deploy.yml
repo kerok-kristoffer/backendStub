@@ -40,12 +40,6 @@ jobs:
     - name: Tidy
       run: go mod tidy
 
-    - name: Install kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'v1.24.3'
-      id: install
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -73,13 +67,3 @@ jobs:
         docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
         docker push -a $REGISTRY/$REPOSITORY
 
-    - name: Update kube config
-      run: aws eks update-kubeconfig --name formulating --region eu-north-1
-
-    - name: Deploy Image to AWS EKS
-      run: |
-        kubectl apply -f eks/aws-auth.yaml
-        kubectl apply -f eks/deployment.yaml
-        kubectl apply -f eks/service.yaml
-        kubectl apply -f eks/issuer.yaml
-        kubectl apply -f eks/ingress.yaml
