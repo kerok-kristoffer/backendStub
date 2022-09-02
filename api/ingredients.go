@@ -58,7 +58,7 @@ func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
 	for i := range ingredients {
 		viewModelIngredients = append(viewModelIngredients, ingredientResponse{
 			Name: ingredients[i].Name,
-			Inci: ingredients[i].Inci.String,
+			Inci: ingredients[i].Inci,
 		})
 	}
 	return viewModelIngredients

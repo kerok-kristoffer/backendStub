@@ -1,7 +1,7 @@
 CREATE TABLE "ingredients" (
                            "id" bigserial PRIMARY KEY,
                            "name" varchar(25) NOT NULL,
-                           "inci" varchar(50),
+                           "inci" varchar(50) NOT NULL,
                            "hash" varchar(50) NOT NULL,
                            "user_id" bigint,
                            "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
