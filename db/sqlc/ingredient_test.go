@@ -79,7 +79,7 @@ func TestUpdateIngredientName(t *testing.T) {
 	params := UpdateIngredientParams{
 		ID:     ingredient.ID,
 		Name:   F.Food().Vegetable(),
-		Inci:   sql.NullString{String: "Aqua", Valid: true},
+		Inci:   "Aqua",
 		Hash:   "",
 		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 	}
