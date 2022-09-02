@@ -14,7 +14,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
-	"github.com/jaswdr/faker"
 	mockdb "github.com/kerok-kristoffer/formulating/db/mock"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 	"github.com/kerok-kristoffer/formulating/token"
@@ -249,8 +248,6 @@ func TestGetUserAccountAPI(t *testing.T) {
 
 // todo kerok - implement test for listUsers route after implementing admin middleware and listUsers api endpoint
 
-// todo kerok - add api tests for ingredient routes
-
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
@@ -259,33 +256,4 @@ func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	err = json.Unmarshal(data, &gotUser)
 	require.NoError(t, err)
 	require.Equal(t, user, gotUser)
-}
-
-func randomUserWithPassword() (db.User, string, error) {
-	f := faker.New()
-	password := f.Internet().Password()
-	return db.User{
-		ID:       0,
-		UserName: f.Person().FirstName(),
-		Email:    f.Internet().Email(),
-		FullName: f.Person().Name(),
-		Hash:     "",
-	}, password, nil
-}
-
-func randomUser() (db.User, error) {
-	f := faker.New()
-	password := f.Internet().Password()
-	hashedPassword, err := util.HashPassword(password)
-	if err != nil {
-		return db.User{}, err
-	}
-
-	return db.User{
-		ID:       f.Int64(),
-		UserName: f.Person().FirstName(),
-		Email:    f.Internet().Email(),
-		FullName: f.Person().Name(),
-		Hash:     hashedPassword,
-	}, nil
 }

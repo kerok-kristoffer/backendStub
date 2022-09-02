@@ -28,11 +28,7 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.ListIngredientsByUserIdParams{
-		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
-		Limit:  req.PageSize,
-		Offset: (req.PageId - 1) * req.PageSize,
-	}
+	arg := ingredientByUserParams(user, req)
 
 	ingredients, err := server.userAccount.ListIngredientsByUserId(ctx, arg)
 
@@ -48,22 +44,34 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, makeViewModel(ingredients))
 }
 
-func makeViewModel(ingredients []db.Ingredient) [20]ingredientResponse {
-	var viewModelIngredients [20]ingredientResponse
+func ingredientByUserParams(user db.User, req listIngredientsRequest) db.ListIngredientsByUserIdParams {
+	arg := db.ListIngredientsByUserIdParams{
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
+		Limit:  req.PageSize,
+		Offset: (req.PageId - 1) * req.PageSize,
+	}
+	return arg
+}
+
+func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
+	var viewModelIngredients []ingredientResponse
 	for i := range ingredients {
-		viewModelIngredients[i] = ingredientResponse{
+		viewModelIngredients = append(viewModelIngredients, ingredientResponse{
 			Name: ingredients[i].Name,
-		}
+			Inci: ingredients[i].Inci.String,
+		})
 	}
 	return viewModelIngredients
 }
 
 type addIngredientRequest struct {
 	Name string `json:"Name" binding:"required"`
+	Inci string `json:"Inci" binding:"required"`
 }
 
 type ingredientResponse struct {
 	Name string `json:"Name" binding:"required"`
+	Inci string `json:"Inci" binding:"required"`
 }
 
 func newIngredientResponse(ingredient db.Ingredient) ingredientResponse {
@@ -85,7 +93,7 @@ func (server Server) addIngredient(ctx *gin.Context) {
 
 	arg := db.CreateIngredientParams{
 		Name:   req.Name,
-		Hash:   "", // todo kerok - remove parameter from Sqlc generator
+		Hash:   "",
 		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 	}
 
@@ -97,5 +105,4 @@ func (server Server) addIngredient(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient))
-
 }

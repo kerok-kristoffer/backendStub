@@ -1,5 +1,9 @@
-DROP TABLE IF EXISTS stocks;
+DROP TABLE IF EXISTS batch_items;
+DROP TABLE IF EXISTS batches;
+DROP TABLE IF EXISTS inventory_items;
 DROP TABLE IF EXISTS currencies;
-DROP TABLE IF EXISTS units;
-DROP TABLE IF EXISTS measures;
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS phases;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS ingredient_tags;
 DROP TABLE IF EXISTS ingredients;

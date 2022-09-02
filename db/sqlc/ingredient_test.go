@@ -76,12 +76,15 @@ func TestUpdateIngredientName(t *testing.T) {
 	user := CreateRandomUser(t)
 	ingredient := createRandomIngredient(t, user.ID)
 
-	params := UpdateIngredientNameParams{
-		ID:   ingredient.ID,
-		Name: F.Food().Vegetable(),
+	params := UpdateIngredientParams{
+		ID:     ingredient.ID,
+		Name:   F.Food().Vegetable(),
+		Inci:   sql.NullString{String: "Aqua", Valid: true},
+		Hash:   "",
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
 	}
 
-	updatedIngredient, err := testQueries.UpdateIngredientName(context.Background(), params)
+	updatedIngredient, err := testQueries.UpdateIngredient(context.Background(), params)
 	require.NoError(t, err)
 	require.NotEmpty(t, updatedIngredient)
 
