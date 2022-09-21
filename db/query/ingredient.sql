@@ -1,10 +1,12 @@
 -- name: CreateIngredient :one
 INSERT INTO ingredients (
                         name,
+                        inci,
                         hash,
-                        user_id
+                        user_id,
+                        function_id
 ) VALUES (
-          $1, $2, $3
+          $1, $2, $3, $4, $5
          ) RETURNING *;
 
 -- name: GetIngredient :one
@@ -24,9 +26,15 @@ SELECT * FROM ingredients
     LIMIT $2
     OFFSET $3;
 
--- name: UpdateIngredientName :one
+-- name: UpdateIngredient :one
 UPDATE ingredients
-SET name = $2
+SET (name,
+     inci,
+     hash,
+     user_id,
+     function_id
+    ) = (
+                 $2, $3, $4, $5, $6)
 WHERE id = $1
 RETURNING *;
 
@@ -37,10 +45,3 @@ WHERE id = $1;
 -- name: DeleteIngredientsByUserId :exec
 DELETE FROM ingredients
 WHERE user_id = $1;
-
-/*
- "id" bigserial PRIMARY KEY,
-                               "name" varchar NOT NULL,
-                               "user_id" bigint,
-                               "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
- */

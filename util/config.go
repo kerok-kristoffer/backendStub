@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Config struct {
+type Config struct { // mapstructure refers to app.env
 	DBDriver            string        `mapstructure:"DB_DRIVER"`
 	DBSource            string        `mapstructure:"DB_SOURCE"`
 	ServerAddress       string        `mapstructure:"SERVER_ADDRESS"`

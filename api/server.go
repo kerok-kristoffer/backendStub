@@ -56,9 +56,14 @@ func (server *Server) setupRouter() {
 
 	userAuthRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
 	userAuthRoutes.GET("/:id", server.getUserAccount)
-	// todo kerok - implement routes for ingredients/recipes
+
+	userAuthRoutes.POST("/functions", server.addIngredientFunction)
+	userAuthRoutes.GET("/functions", server.listIngredientFunctions)
 	userAuthRoutes.POST("/ingredients", server.addIngredient)
 	userAuthRoutes.GET("/ingredients", server.listIngredients)
+	userAuthRoutes.POST("/formulas", server.addFormula)
+	userAuthRoutes.POST("/formulas/:id", server.updateFormula)
+	userAuthRoutes.GET("/formulas", server.listFormulas)
 
 	// todo kerok - implement separate middleware for admins
 	adminRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
