@@ -3,9 +3,10 @@ INSERT INTO ingredients (
                         name,
                         inci,
                         hash,
-                        user_id
+                        user_id,
+                        function_id
 ) VALUES (
-          $1, $2, $3, $4
+          $1, $2, $3, $4, $5
          ) RETURNING *;
 
 -- name: GetIngredient :one
@@ -30,8 +31,10 @@ UPDATE ingredients
 SET (name,
      inci,
      hash,
-     user_id) = (
-                 $2, $3, $4, $5)
+     user_id,
+     function_id
+    ) = (
+                 $2, $3, $4, $5, $6)
 WHERE id = $1
 RETURNING *;
 

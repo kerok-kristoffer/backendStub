@@ -1,29 +1,19 @@
 -- name: CreateIngredientTag :one
 INSERT INTO ingredient_tags (
-                             user_id,
-                             ingredient_id,
-                             label
-) VALUES (
-             $1, $2, $3
-         ) RETURNING *;
+                             name
+) VALUES ($1) RETURNING *;
 
 -- name: GetIngredientTag :one
 SELECT * FROM ingredient_tags
 WHERE id = $1 LIMIT 1;
 
--- name: ListIngredientTagsByUserId :many
-SELECT * FROM ingredient_tags
-WHERE user_id = $1
-ORDER BY id
-LIMIT $2
-    OFFSET $3;
+-- name: ListIngredientTags :many
+SELECT * FROM ingredient_tags;
 
 -- name: UpdateIngredientTag :one
 UPDATE ingredient_tags
-SET (user_id,
-     ingredient_id,
-     label) =
-        ($2, $3, $4)
+SET (name) =
+        ($2)
 WHERE id = $1
 RETURNING *;
 

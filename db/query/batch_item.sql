@@ -2,7 +2,7 @@
 INSERT INTO batch_items (
                          amount,
                          inventory_item_id,
-                         recipe_ingredient_id,
+                         formula_ingredient_id,
                          batch_id,
                          user_id,
                          description
@@ -24,7 +24,7 @@ ORDER BY id;
 UPDATE batch_items
 SET (amount,
      inventory_item_id,
-     recipe_ingredient_id,
+     formula_ingredient_id,
      batch_id,
      user_id,
      description) =

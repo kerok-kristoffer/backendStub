@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/kerok-kristoffer/formulating/db/models"
 )
 
 // UserAccount Interface representing SQL and Mock version
@@ -12,12 +13,22 @@ import (
 type UserAccount interface { // todo kerok - rename interface at some point?
 	Querier
 	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+	UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error)
+}
+
+type PhaseModel struct {
+}
+
+type FormulaModel struct {
+	Name   string `json:"name" binding:"required"`
+	Phases []*PhaseModel
 }
 
 type SQLUserAccount struct {
 	// todo corresponds to store in tut
 	*Queries
-	db *sql.DB
+	db       *sql.DB
+	Formulas []*FormulaModel
 }
 
 func NewUserAccount(db *sql.DB) UserAccount {
@@ -58,6 +69,86 @@ type TransferTxResult struct {
 	ToUserID   User     `json:"toUserID"`
 	FromEntry  Entry    `json:"fromEntry"`
 	ToEntry    Entry    `json:"toEntry"`
+}
+
+type UpdatePhaseTxResult struct {
+	Phase       Phase               `json:"phase"`
+	Ingredients []FormulaIngredient `json:"ingredients"`
+}
+
+type UpdateFormulaTxResult struct {
+	Formula Formula               `json:"formula"`
+	Phases  []UpdatePhaseTxResult `json:"phases"`
+}
+
+func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error) {
+	var result UpdateFormulaTxResult
+	err := userAccount.execTx(ctx, func(q *Queries) error {
+		var formulaPhases = new([]UpdatePhaseTxResult)
+		for _, phase := range arg.Phases {
+
+			var phaseIngredients = new([]FormulaIngredient)
+			for _, ingredient := range phase.Ingredients {
+				var ingredientTxResult FormulaIngredient
+				var err error
+				if ingredient.FormulaIngredientId == 0 {
+					formulaIngredientParams := CreateFormulaIngredientParams{
+						IngredientID: ingredient.IngredientId,
+						Percentage:   ingredient.FormulaIngredientPercentage,
+						PhaseID:      phase.PhaseId,
+						Description:  sql.NullString{},
+					}
+					ingredientTxResult, err = q.CreateFormulaIngredient(ctx, formulaIngredientParams)
+				} else {
+					params := UpdateFormulaIngredientParams{
+						ID:           ingredient.FormulaIngredientId,
+						IngredientID: ingredient.IngredientId,
+						Percentage:   ingredient.FormulaIngredientPercentage,
+						PhaseID:      phase.PhaseId,
+						Description:  sql.NullString{},
+					}
+					ingredientTxResult, err = q.UpdateFormulaIngredient(ctx, params)
+				}
+				if err != nil {
+					return err
+				}
+				*phaseIngredients = append(*phaseIngredients, ingredientTxResult)
+			}
+			// TODO kerok: Currently does not support adding a Phase to an updated Formula
+			phaseTxResult, err := q.UpdatePhase(ctx, UpdatePhaseParams{
+				ID:          phase.PhaseId,
+				Name:        phase.PhaseName,
+				Description: phase.PhaseDescription,
+				FormulaID:   arg.FormulaId,
+			})
+			if err != nil {
+				return err
+			}
+			updatePhaseTxResult := UpdatePhaseTxResult{
+				Phase:       phaseTxResult,
+				Ingredients: *phaseIngredients,
+			}
+			*formulaPhases = append(*formulaPhases, updatePhaseTxResult)
+		}
+
+		formulaTxResult, err := q.UpdateFormula(ctx, UpdateFormulaParams{
+			ID:            arg.FormulaId,
+			Name:          arg.FormulaName,
+			DefaultAmount: arg.Weight,
+			Description:   arg.FormulaDescription,
+			UserID:        arg.UserId,
+		})
+		if err != nil {
+			return err
+		}
+
+		result = UpdateFormulaTxResult{
+			Formula: formulaTxResult,
+			Phases:  *formulaPhases,
+		}
+		return nil
+	})
+	return result, err
 }
 
 func (userAccount *SQLUserAccount) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {

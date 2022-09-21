@@ -1,5 +1,5 @@
--- name: CreateRecipeIngredient :one
-INSERT INTO recipe_ingredients (
+-- name: CreateFormulaIngredient :one
+INSERT INTO formula_ingredients (
                                 ingredient_id,
                                 percentage,
                                 phase_id,
@@ -8,17 +8,17 @@ INSERT INTO recipe_ingredients (
           $1, $2, $3, $4
          ) RETURNING *;
 
--- name: GetRecipeIngredient :one
-SELECT * FROM recipe_ingredients
+-- name: GetFormulaIngredient :one
+SELECT * FROM formula_ingredients
     WHERE id = $1 LIMIT 1;
 
--- name: ListRecipeIngredientsByUserId :many
-SELECT * FROM recipe_ingredients
+-- name: ListFormulaIngredientsByPhaseId :many
+SELECT * FROM formula_ingredients
     WHERE phase_id = $1
     ORDER BY id;
 
--- name: UpdateRecipeIngredient :one
-UPDATE recipe_ingredients
+-- name: UpdateFormulaIngredient :one
+UPDATE formula_ingredients
 SET (ingredient_id,
      percentage,
      phase_id,
@@ -27,6 +27,6 @@ SET (ingredient_id,
 WHERE id = $1
 RETURNING *;
 
--- name: DeleteRecipeIngredient :exec
-DELETE FROM recipe_ingredients
+-- name: DeleteFormulaIngredient :exec
+DELETE FROM formula_ingredients
 WHERE id = $1;
