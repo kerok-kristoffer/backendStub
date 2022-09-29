@@ -9,8 +9,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: formulating-ingress
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt
 spec:
   ingressClassName: nginx
   rules:
@@ -24,7 +22,3 @@ spec:
               name: formulating-api-service
               port:
                 number: 80
-  tls:
-  - hosts:
-    - api.kerok.se
-    secretName: formulating-api-cert
