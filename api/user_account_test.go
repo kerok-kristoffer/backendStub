@@ -246,6 +246,7 @@ func TestGetUserAccountAPI(t *testing.T) {
 	}
 }
 
+// todo kerok - add tests for login
 // todo kerok - implement test for listUsers route after implementing admin middleware and listUsers api endpoint
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
