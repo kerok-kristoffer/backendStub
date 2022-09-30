@@ -17,29 +17,31 @@ func TestPasetoMaker(t *testing.T) {
 	issuedAt := time.Now()
 	expiredAt := issuedAt.Add(duration)
 
-	token, err := maker.CreateToken(username, duration)
+	token, payload, err := maker.CreateToken(username, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
+	require.NotEmpty(t, payload)
 
-	payload, err := maker.VerifyToken(token)
+	payload, err = maker.VerifyToken(token)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 
 	require.NotZero(t, payload.ID)
 	require.Equal(t, username, payload.Username)
 	require.WithinDuration(t, issuedAt, payload.IssuedAt, time.Second)
-	require.WithinDuration(t, expiredAt, payload.ExpiredAt, time.Second)
+	require.WithinDuration(t, expiredAt, payload.ExpiresAt, time.Second)
 }
 
 func TestExpiredPasetoToken(t *testing.T) {
 	maker, err := NewPasetoMaker(f.RandomStringWithLength(32))
 	require.NoError(t, err)
 
-	token, err := maker.CreateToken(f.Internet().User(), -time.Minute)
+	token, payload, err := maker.CreateToken(f.Internet().User(), -time.Minute)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
+	require.NotEmpty(t, payload)
 
-	payload, err := maker.VerifyToken(token)
+	payload, err = maker.VerifyToken(token)
 	require.Error(t, err)
 	require.EqualError(t, err, ErrExpiredToken.Error())
 	require.Nil(t, payload)
@@ -52,14 +54,16 @@ func TestInvalidPasetoToken(t *testing.T) {
 	require.NoError(t, err)
 
 	duration := time.Minute
-	token, err := maker.CreateToken(f.Internet().User(), duration)
+	token, payload, err := maker.CreateToken(f.Internet().User(), duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
-	invalidToken, err := maker2.CreateToken(f.Internet().User(), duration)
+	require.NotEmpty(t, payload)
+	invalidToken, payload, err := maker2.CreateToken(f.Internet().User(), duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
+	require.NotEmpty(t, payload)
 
-	payload, err := maker.VerifyToken(invalidToken) // todo kerok - add more examples of invalid tokens for test
+	payload, err = maker.VerifyToken(invalidToken) // todo kerok - add more examples of invalid tokens for test
 	require.Error(t, err)
 	require.EqualError(t, err, ErrInvalidToken.Error())
 	require.Nil(t, payload)
