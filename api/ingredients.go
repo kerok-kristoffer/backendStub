@@ -131,7 +131,7 @@ func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
 
 type addIngredientRequest struct {
 	Name string `json:"name" binding:"required"`
-	Inci string `json:"inci" binding:"required"`
+	Inci string `json:"inci"`
 }
 
 type ingredientResponse struct {
