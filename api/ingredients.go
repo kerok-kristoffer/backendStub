@@ -3,10 +3,10 @@ package api
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
-	"github.com/kerok-kristoffer/formulating/token"
 )
 
 type addFunctionRequest struct {
@@ -21,8 +21,11 @@ func (server *Server) addIngredientFunction(ctx *gin.Context) {
 		return
 	}
 
-	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
 
 	arg := db.CreateIngredientFunctionParams{
 		Name:   req.Name,
@@ -41,8 +44,7 @@ func (server *Server) addIngredientFunction(ctx *gin.Context) {
 
 func (server *Server) listIngredientFunctions(ctx *gin.Context) {
 
-	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
+	user, err := server.getAuthenticatedUser(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
@@ -73,9 +75,25 @@ func makeFunctionsViewModel(functions []db.IngredientFunction) {
 	}
 }
 
+func (server *Server) getIngredientCount(ctx *gin.Context) {
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	count, err := server.userAccount.GetIngredientCount(ctx, user.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, count)
+}
+
 type listIngredientsRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=20"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=100"`
 }
 
 func (server *Server) listIngredients(ctx *gin.Context) {
@@ -85,8 +103,7 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 		return
 	}
 
-	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
+	user, err := server.getAuthenticatedUser(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
@@ -106,6 +123,54 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, makeViewModel(ingredients))
+}
+
+type updateIngredientRequest struct {
+	Id   int64  `json:"id" binding:"required"`
+	Name string `json:"name" binding:"required"`
+	Inci string `json:"inci"`
+}
+
+func (server *Server) updateIngredient(ctx *gin.Context) {
+	var req updateIngredientRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	validateIngredient, err := server.userAccount.GetIngredient(ctx, req.Id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	if validateIngredient.UserID != user.ID {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	params := db.UpdateIngredientParams{
+		ID:         req.Id,
+		Name:       req.Name,
+		Inci:       req.Inci,
+		Hash:       "",
+		UserID:     user.ID,
+		FunctionID: sql.NullInt64{},
+	}
+
+	ingredient, err := server.userAccount.UpdateIngredient(ctx, params)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient))
 }
 
 func ingredientByUserParams(user db.User, req listIngredientsRequest) db.ListIngredientsByUserIdParams {
@@ -156,8 +221,11 @@ func (server Server) addIngredient(ctx *gin.Context) {
 		return
 	}
 
-	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
 
 	arg := db.CreateIngredientParams{
 		Name:   req.Name,
@@ -174,4 +242,37 @@ func (server Server) addIngredient(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient))
+}
+
+func (server *Server) deleteIngredient(ctx *gin.Context) {
+
+	ingredientId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	validateIngredient, err := server.userAccount.GetIngredient(ctx, ingredientId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	if validateIngredient.UserID != user.ID {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	err = server.userAccount.DeleteIngredient(ctx, ingredientId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
 }

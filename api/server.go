@@ -62,6 +62,10 @@ func (server *Server) setupRouter() {
 	userAuthRoutes.GET("/functions", server.listIngredientFunctions)
 	userAuthRoutes.POST("/ingredients", server.addIngredient)
 	userAuthRoutes.GET("/ingredients", server.listIngredients)
+	userAuthRoutes.GET("/ingredients/count", server.getIngredientCount)
+	userAuthRoutes.POST("/ingredients/:id", server.updateIngredient)
+	userAuthRoutes.DELETE("ingredients/:id", server.deleteIngredient)
+
 	userAuthRoutes.POST("/formulas", server.addFormula)
 	userAuthRoutes.POST("/formulas/:id", server.updateFormula)
 	userAuthRoutes.GET("/formulas", server.listFormulas)
