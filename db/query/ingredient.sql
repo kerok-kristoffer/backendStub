@@ -13,6 +13,10 @@ INSERT INTO ingredients (
 SELECT * FROM ingredients
 WHERE id = $1 LIMIT 1;
 
+-- name: GetIngredientCount :one
+SELECT COUNT(*) FROM ingredients
+WHERE user_id = $1;
+
 -- name: ListIngredients :many
 SELECT * FROM ingredients
 ORDER BY id
