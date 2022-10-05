@@ -2,7 +2,7 @@ package token
 
 import (
 	"errors"
-	"math/rand"
+	"github.com/google/uuid"
 	"time"
 )
 
@@ -10,7 +10,7 @@ var ErrInvalidToken = errors.New("token is invalid")
 var ErrExpiredToken = errors.New("token has expired")
 
 type Payload struct {
-	ID        int64     `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Username  string    `json:"username"`
 	IssuedAt  time.Time `json:"issued_at"`
 	ExpiresAt time.Time `json:"expired_at"`

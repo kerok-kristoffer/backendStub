@@ -52,10 +52,9 @@ jobs:
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
           go mod download github.com/golang/mock
+          go mod download github.com/google/uuid
+          go mod tidy
           mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
-
-      - name: Tidy
-        run: go mod tidy
 
       - name: Install golang-migrate
         run: |
