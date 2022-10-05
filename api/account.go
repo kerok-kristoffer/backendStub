@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/kerok-kristoffer/formulating/util"
@@ -145,7 +146,7 @@ type loginUserRequest struct {
 }
 
 type loginUserResponse struct {
-	SessionId             int64        `json:"session_id"`
+	SessionId             uuid.UUID    `json:"session_id"`
 	AccessToken           string       `json:"access_token"`
 	AccessTokenExpiresAt  time.Time    `json:"access_token_expires_at"`
 	RefreshToken          string       `json:"refresh_token"`

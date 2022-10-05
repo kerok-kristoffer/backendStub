@@ -1,5 +1,5 @@
 CREATE TABLE "sessions" (
-                         "id" bigserial PRIMARY KEY,
+                         "id" uuid PRIMARY KEY,
                          "user_name" varchar NOT NULL,
                          "refresh_token" varchar NOT NULL,
                          "user_agent" varchar NOT NULL,
