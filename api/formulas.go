@@ -84,8 +84,6 @@ func (server Server) updateFormula(ctx *gin.Context) {
 	response := generateFormulaViewModel(fullFormula)
 
 	ctx.JSON(http.StatusOK, response)
-	// TODO: implement updateFormula
-	// update all members of FormulaModel or use some filter on only updated values?
 
 }
 

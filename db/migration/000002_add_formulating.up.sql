@@ -21,6 +21,7 @@ CREATE TABLE "ingredients" (
 CREATE TABLE "ingredient_tags" (
                                "id" bigserial PRIMARY KEY,
                                "name" varchar(25) NOT NULL,
+                               "user_id" bigint NOT NULL,
                                "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -30,13 +31,6 @@ CREATE TABLE "ingredient_tag_maps" (
                                        "ingredient_tag_id" bigint NOT NULL,
                                        "ingredient_id" bigint NOT NULL
 );
-
-CREATE TABLE "user_ingredient_tags" (
-                                        "id" bigserial PRIMARY KEY,
-                                        "user_id" bigint NOT NULL,
-                                        "ingredient_tag_id" bigint NOT NULL
-);
-
 
 CREATE TABLE "formulas" (
                         "id" bigserial PRIMARY KEY,
@@ -51,6 +45,7 @@ CREATE TABLE "formulas" (
 
 CREATE TABLE "formula_tags" (
                         "id" bigserial PRIMARY KEY,
+                        "user_id" bigint NOT NULL,
                         "name" varchar(25) NOT NULL
 
 );
@@ -59,12 +54,6 @@ CREATE TABLE "formula_tag_maps" (
                            "id" bigserial PRIMARY KEY,
                            "formula_id" bigint NOT NULL,
                            "formula_tag_id" bigint NOT NULL
-);
-
-CREATE TABLE "user_formula_tags" (
-                            "id" bigserial PRIMARY KEY,
-                            "user_id" bigint NOT NULL,
-                            "formula_tag_id" bigint NOT NULL
 );
 
 CREATE TABLE "phases" (
@@ -131,12 +120,12 @@ CREATE TABLE "batch_items" (
 
 ALTER TABLE "ingredients" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "ingredients" ADD FOREIGN KEY ("function_id") REFERENCES "ingredient_functions" ("id");
+ALTER TABLE "ingredient_tags" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "ingredient_tag_maps" ADD FOREIGN KEY ("ingredient_id") REFERENCES "ingredients" ("id");
 ALTER TABLE "ingredient_tag_maps" ADD FOREIGN KEY ("ingredient_tag_id") REFERENCES "ingredient_tags" ("id");
-ALTER TABLE "user_ingredient_tags" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
-ALTER TABLE "user_ingredient_tags" ADD FOREIGN KEY ("ingredient_tag_id") REFERENCES "ingredient_tags" ("id");
 
 ALTER TABLE "formulas" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
+ALTER TABLE "formula_tags" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "formula_tag_maps" ADD FOREIGN KEY ("formula_id") REFERENCES "formulas" ("id");
 ALTER TABLE "formula_tag_maps" ADD FOREIGN KEY ("formula_tag_id") REFERENCES "formula_tags" ("id");
 ALTER TABLE "phases" ADD FOREIGN KEY ("formula_id") REFERENCES "formulas"("id");
@@ -152,14 +141,12 @@ ALTER TABLE "batch_items" ADD FOREIGN KEY ("inventory_item_id") REFERENCES "inve
 ALTER TABLE "batch_items" ADD FOREIGN KEY ("formula_ingredient_id") REFERENCES "formula_ingredients" ("id");
 
 CREATE INDEX ON "ingredients" ("name", "user_id");
-CREATE INDEX ON "ingredient_tags" ("id");
+CREATE INDEX ON "ingredient_tags" ("id", "user_id");
 CREATE INDEX ON "ingredient_tag_maps" ("ingredient_tag_id", "ingredient_id");
-CREATE INDEX ON "user_ingredient_tags" ("ingredient_tag_id", "user_id");
 
 CREATE INDEX ON "formulas" ("id", "user_id");
-CREATE INDEX ON "formula_tags" ("id");
+CREATE INDEX ON "formula_tags" ("id", "user_id");
 CREATE INDEX ON "formula_tag_maps" ("formula_tag_id", "formula_id");
-CREATE INDEX ON "user_formula_tags" ("user_id", "formula_tag_id");
 
 CREATE INDEX ON "phases" ("id", "formula_id");
 CREATE INDEX ON "formula_ingredients" ("id", "phase_id", "ingredient_id");

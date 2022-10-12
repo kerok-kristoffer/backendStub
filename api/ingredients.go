@@ -122,13 +122,36 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, makeViewModel(ingredients))
+	var responseIngredients []ingredientResponse
+	for _, ingredient := range ingredients {
+		tagMaps, err := server.userAccount.ListIngredientTagsByIngredientId(ctx, ingredient.ID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+		var tags []ingredientTagRequest
+		for _, tagMap := range tagMaps {
+			tags = append(tags, ingredientTagRequest{
+				Id:   tagMap.IngredientTagsID,
+				Name: tagMap.IngredientTag,
+			})
+		}
+		responseIngredients = append(responseIngredients, newIngredientResponse(ingredient, tags))
+	}
+
+	ctx.JSON(http.StatusOK, responseIngredients)
+}
+
+type ingredientTagRequest struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name" binding:"required"`
 }
 
 type updateIngredientRequest struct {
-	Id   int64  `json:"id" binding:"required"`
-	Name string `json:"name" binding:"required"`
-	Inci string `json:"inci"`
+	Id   int64                  `json:"id" binding:"required"`
+	Name string                 `json:"name" binding:"required"`
+	Inci string                 `json:"inci"`
+	Tags []ingredientTagRequest `json:"tags" binding:"required"`
 }
 
 func (server *Server) updateIngredient(ctx *gin.Context) {
@@ -169,8 +192,78 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
+	// update tags
+	var tags []ingredientTagRequest
+	for _, tag := range req.Tags {
 
-	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient))
+		ingredientTag, err := server.userAccount.GetIngredientTagByName(ctx, db.GetIngredientTagByNameParams{
+			Name:   tag.Name,
+			UserID: user.ID,
+		})
+		if err != nil {
+			if err == sql.ErrNoRows {
+				ingredientTag, err = server.userAccount.CreateIngredientTag(ctx, db.CreateIngredientTagParams{
+					Name:   tag.Name,
+					UserID: user.ID,
+				})
+				if err != nil {
+					ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+					return
+				}
+			} else {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+		}
+
+		_, err = server.userAccount.GetTagMap(ctx, db.GetTagMapParams{
+			IngredientID:    ingredient.ID,
+			IngredientTagID: ingredientTag.ID,
+		})
+		if err == sql.ErrNoRows { // TODO for some reason does not add basic tag when adding it to Water in front-end, fix!
+			_, err := server.userAccount.CreateIngredientTagMap(ctx, db.CreateIngredientTagMapParams{
+				IngredientTagID: ingredientTag.ID,
+				IngredientID:    req.Id,
+			})
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+		} else if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+
+	}
+
+	tagMaps, err := server.userAccount.ListIngredientTagsByIngredientId(ctx, req.Id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+	}
+	// TODO: Remove existing ingredient_tag_map with current ingredient_id if not in tags table.
+	for _, tagMap := range tagMaps {
+		if !isInProvidedTags(req.Tags, tagMap.IngredientTag) {
+			err := server.userAccount.DeleteIngredientTagMap(ctx, tagMap.IngredientTagMapsID)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+		}
+		tags = append(tags, ingredientTagRequest{
+			Id:   tagMap.IngredientTagsID,
+			Name: tagMap.IngredientTag,
+		})
+	}
+	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, tags))
+}
+
+func isInProvidedTags(tags []ingredientTagRequest, str string) bool {
+	for _, tag := range tags {
+		if tag.Name == str {
+			return true
+		}
+	}
+	return false
 }
 
 func ingredientByUserParams(user db.User, req listIngredientsRequest) db.ListIngredientsByUserIdParams {
@@ -200,16 +293,18 @@ type addIngredientRequest struct {
 }
 
 type ingredientResponse struct {
-	Id   int64  `json:"Id" binding:"required"`
-	Name string `json:"Name" binding:"required"`
-	Inci string `json:"Inci" binding:"required"`
+	Id   int64                  `json:"Id" binding:"required"`
+	Name string                 `json:"Name" binding:"required"`
+	Inci string                 `json:"Inci" binding:"required"`
+	Tags []ingredientTagRequest `json:"tags" binding:"required"`
 }
 
-func newIngredientResponse(ingredient db.Ingredient) ingredientResponse {
+func newIngredientResponse(ingredient db.Ingredient, tags []ingredientTagRequest) ingredientResponse {
 	return ingredientResponse{
 		Id:   ingredient.ID,
 		Name: ingredient.Name,
 		Inci: ingredient.Inci,
+		Tags: tags,
 	}
 }
 
@@ -241,7 +336,8 @@ func (server Server) addIngredient(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient))
+	var noTags []ingredientTagRequest
+	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, noTags))
 }
 
 func (server *Server) deleteIngredient(ctx *gin.Context) {
