@@ -53,6 +53,10 @@ func TestGetIngredientsAPI(t *testing.T) {
 					ListIngredientsByUserId(gomock.Any(), gomock.Eq(ingredientsByUserParams)).
 					Times(1).
 					Return(ingredients, nil)
+				account.EXPECT().
+					ListIngredientTagsByIngredientId(gomock.Any(),
+						gomock.Any()). // TODO kerok - tighten up this test
+					Times(2)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
