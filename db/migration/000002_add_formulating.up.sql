@@ -123,7 +123,6 @@ ALTER TABLE "ingredients" ADD FOREIGN KEY ("function_id") REFERENCES "ingredient
 ALTER TABLE "ingredient_tags" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "ingredient_tag_maps" ADD FOREIGN KEY ("ingredient_id") REFERENCES "ingredients" ("id");
 ALTER TABLE "ingredient_tag_maps" ADD FOREIGN KEY ("ingredient_tag_id") REFERENCES "ingredient_tags" ("id");
-ALTER TABLE "user_ingredient_tags" ADD FOREIGN KEY ("ingredient_tag_id") REFERENCES "ingredient_tags" ("id");
 
 ALTER TABLE "formulas" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "formula_tags" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
