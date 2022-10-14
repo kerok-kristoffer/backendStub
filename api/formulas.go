@@ -160,7 +160,7 @@ type formulaResponse struct {
 
 type listFormulasRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=20"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
 }
 
 func (server Server) listFormulas(ctx *gin.Context) {
@@ -234,7 +234,6 @@ func generateFormulaViewModel(fullFormulaIngredients []db.GetFullFormulaRow) for
 		phase.FormulaIngredients = append(phase.FormulaIngredients, formulaIngredientModel)
 		formulaPhases[ingredient.PhaseID] = phase
 	}
-	log.Println(formulaPhases)
 
 	formulaPhaseModels := new([]Phase)
 	for _, phase := range formulaPhases {

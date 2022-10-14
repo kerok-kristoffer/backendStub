@@ -13,6 +13,7 @@ CREATE TABLE "ingredients" (
                            "hash" varchar(50) NOT NULL,
                            "user_id" bigint NOT NULL,
                            "function_id" bigint,
+                           "cost" int4 DEFAULT 0,
                            "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 
