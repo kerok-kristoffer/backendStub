@@ -35,10 +35,11 @@ UPDATE ingredients
 SET (name,
      inci,
      hash,
+     cost,
      user_id,
      function_id
     ) = (
-                 $2, $3, $4, $5, $6)
+                 $2, $3, $4, $5, $6, $7)
 WHERE id = $1
 RETURNING *;
 

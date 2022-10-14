@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
@@ -151,6 +152,7 @@ type updateIngredientRequest struct {
 	Id   int64                  `json:"id" binding:"required"`
 	Name string                 `json:"name" binding:"required"`
 	Inci string                 `json:"inci"`
+	Cost int                    `json:"cost"`
 	Tags []ingredientTagRequest `json:"tags" binding:"required"`
 }
 
@@ -182,6 +184,7 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		Name:       req.Name,
 		Inci:       req.Inci,
 		Hash:       "",
+		Cost:       sql.NullInt32{Int32: int32(req.Cost), Valid: true},
 		UserID:     user.ID,
 		FunctionID: sql.NullInt64{},
 	}
@@ -203,7 +206,7 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		if err != nil {
 			if err == sql.ErrNoRows {
 				ingredientTag, err = server.userAccount.CreateIngredientTag(ctx, db.CreateIngredientTagParams{
-					Name:   tag.Name,
+					Name:   strings.ToLower(tag.Name),
 					UserID: user.ID,
 				})
 				if err != nil {
@@ -220,7 +223,8 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 			IngredientID:    ingredient.ID,
 			IngredientTagID: ingredientTag.ID,
 		})
-		if err == sql.ErrNoRows { // TODO for some reason does not add basic tag when adding it to Water in front-end, fix!
+
+		if err == sql.ErrNoRows {
 			_, err := server.userAccount.CreateIngredientTagMap(ctx, db.CreateIngredientTagMapParams{
 				IngredientTagID: ingredientTag.ID,
 				IngredientID:    req.Id,
@@ -259,7 +263,7 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 
 func isInProvidedTags(tags []ingredientTagRequest, str string) bool {
 	for _, tag := range tags {
-		if tag.Name == str {
+		if strings.ToLower(tag.Name) == str {
 			return true
 		}
 	}
