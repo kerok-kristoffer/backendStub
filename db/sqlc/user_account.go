@@ -105,6 +105,7 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 						IngredientID: ingredient.IngredientId,
 						Percentage:   ingredient.FormulaIngredientPercentage,
 						PhaseID:      phase.PhaseId,
+						Cost:         sql.NullInt32{Int32: ingredient.FormulaIngredientCost, Valid: true},
 						Description:  sql.NullString{},
 					}
 					ingredientTxResult, err = q.UpdateFormulaIngredient(ctx, params)

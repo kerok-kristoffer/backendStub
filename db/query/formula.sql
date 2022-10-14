@@ -14,16 +14,16 @@ SELECT * FROM formulas
     WHERE id = $1 LIMIT 1;
 
 -- name: GetFullFormula :many
-SELECT r.id as "formula_id", r.name as "formula_name", r.default_amount, r.default_amount_oz,
-       r.description, r.user_id,
+SELECT f.id as "formula_id", f.name as "formula_name", f.default_amount, f.default_amount_oz,
+       f.description, f.user_id,
        p.name as "phase_name", p.description as "phase_description",
-       ri.phase_id, ri.id as "formula_ingredient_id", ri.ingredient_id, ri.percentage,
+       fi.phase_id, fi.id as "formula_ingredient_id", fi.ingredient_id, fi.cost, fi.percentage,
        i.name as "ingredient_name", i.inci, i.function_id
-FROM formulas r
-         JOIN phases p on r.id = p.formula_id
-         JOIN formula_ingredients ri on p.id = ri.phase_id
-         JOIN ingredients i on ri.ingredient_id = i.id
-WHERE r.id = $1;
+FROM formulas f
+         JOIN phases p on f.id = p.formula_id
+         JOIN formula_ingredients fi on p.id = fi.phase_id
+         JOIN ingredients i on fi.ingredient_id = i.id
+WHERE f.id = $1;
 
 -- name: ListFormulasByUserId :many
 SELECT * FROM formulas
