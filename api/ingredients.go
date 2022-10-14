@@ -300,6 +300,7 @@ type ingredientResponse struct {
 	Id   int64                  `json:"Id" binding:"required"`
 	Name string                 `json:"Name" binding:"required"`
 	Inci string                 `json:"Inci" binding:"required"`
+	Cost int32                  `json:"cost"`
 	Tags []ingredientTagRequest `json:"tags" binding:"required"`
 }
 
@@ -308,6 +309,7 @@ func newIngredientResponse(ingredient db.Ingredient, tags []ingredientTagRequest
 		Id:   ingredient.ID,
 		Name: ingredient.Name,
 		Inci: ingredient.Inci,
+		Cost: ingredient.Cost.Int32,
 		Tags: tags,
 	}
 }
