@@ -5,6 +5,7 @@ type UpdateFullFormulaIngredientParams struct {
 	IngredientId                int64  `json:"ingredient_id" binding:"required"`
 	FormulaIngredientPercentage int32  `json:"percentage" binding:"required"`
 	FormulaIngredientName       string `json:"name" binding:"required"`
+	FormulaIngredientCost       int32  `json:"cost" binding:"required"`
 }
 
 type UpdateFullFormulaPhaseParams struct {

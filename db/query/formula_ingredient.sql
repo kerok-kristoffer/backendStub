@@ -3,9 +3,10 @@ INSERT INTO formula_ingredients (
                                 ingredient_id,
                                 percentage,
                                 phase_id,
+                                cost,
                                 description
 ) VALUES (
-          $1, $2, $3, $4
+          $1, $2, $3, $4, $5
          ) RETURNING *;
 
 -- name: GetFormulaIngredient :one
@@ -22,8 +23,9 @@ UPDATE formula_ingredients
 SET (ingredient_id,
      percentage,
      phase_id,
+     cost,
     description) =
-        ($2, $3, $4, $5)
+        ($2, $3, $4, $5, $6)
 WHERE id = $1
 RETURNING *;
 

@@ -72,6 +72,7 @@ CREATE TABLE "formula_ingredients" (
                           "percentage" int NOT NULL,
                           "description" varchar(250),
                           "phase_id" bigint NOT NULL,
+                          "cost" int,
                           "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

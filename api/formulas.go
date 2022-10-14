@@ -18,6 +18,7 @@ type FormulaIngredient struct {
 	Percentage     int64   `json:"percentage" binding:"required"`
 	WeightInGrams  float32 `json:"weightInGrams" binding:"required"`
 	WeightInOunces float32 `json:"weightInOunces" binding:"required"`
+	Cost           int32   `json:"cost"  binding:"required"`
 	Description    string  `json:"description" binding:"required"`
 }
 
@@ -230,6 +231,7 @@ func generateFormulaViewModel(fullFormulaIngredients []db.GetFullFormulaRow) for
 			Name:         ingredient.IngredientName,
 			Inci:         ingredient.Inci,
 			Percentage:   int64(ingredient.Percentage),
+			Cost:         ingredient.Cost.Int32,
 		}
 		phase.FormulaIngredients = append(phase.FormulaIngredients, formulaIngredientModel)
 		formulaPhases[ingredient.PhaseID] = phase
@@ -288,6 +290,7 @@ func CreateIngredientParamsFromRequest(ingredient FormulaIngredient, savedPhase 
 		IngredientID: ingredient.IngredientId,
 		Percentage:   int32(ingredient.Percentage),
 		PhaseID:      savedPhase.ID,
+		Cost:         sql.NullInt32{Int32: ingredient.Cost, Valid: true},
 		Description:  sql.NullString{String: ingredient.Description, Valid: true},
 	}
 	return formulaIngredientParams
