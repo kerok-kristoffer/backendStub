@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/kerok-kristoffer/formulating/db/models"
 )
 
@@ -83,53 +84,41 @@ type UpdateFormulaTxResult struct {
 
 func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error) {
 	var result UpdateFormulaTxResult
+
+	updateId := uuid.New()
 	err := userAccount.execTx(ctx, func(q *Queries) error {
 		var formulaPhases = new([]UpdatePhaseTxResult)
 		for _, phase := range arg.Phases {
 
+			phaseTxResult, err := addOrUpdatePhase(q, phase, ctx, arg, updateId)
+			if err != nil {
+				return err
+			}
+			phase.PhaseId = phaseTxResult.ID
+
 			var phaseIngredients = new([]FormulaIngredient)
 			for _, ingredient := range phase.Ingredients {
-				var ingredientTxResult FormulaIngredient
-				var err error
-				if ingredient.FormulaIngredientId == 0 {
-					formulaIngredientParams := CreateFormulaIngredientParams{
-						IngredientID: ingredient.IngredientId,
-						Percentage:   ingredient.FormulaIngredientPercentage,
-						PhaseID:      phase.PhaseId,
-						Description:  sql.NullString{},
-					}
-					ingredientTxResult, err = q.CreateFormulaIngredient(ctx, formulaIngredientParams)
-				} else {
-					params := UpdateFormulaIngredientParams{
-						ID:           ingredient.FormulaIngredientId,
-						IngredientID: ingredient.IngredientId,
-						Percentage:   ingredient.FormulaIngredientPercentage,
-						PhaseID:      phase.PhaseId,
-						Cost:         sql.NullInt32{Int32: ingredient.FormulaIngredientCost, Valid: true},
-						Description:  sql.NullString{},
-					}
-					ingredientTxResult, err = q.UpdateFormulaIngredient(ctx, params)
-				}
+				ingredientTxResult, err := addOrUpdateFormulaIngredient(q, ingredient, phase, ctx, updateId)
 				if err != nil {
 					return err
 				}
 				*phaseIngredients = append(*phaseIngredients, ingredientTxResult)
 			}
-			// TODO kerok: Currently does not support adding a Phase to an updated Formula
-			phaseTxResult, err := q.UpdatePhase(ctx, UpdatePhaseParams{
-				ID:          phase.PhaseId,
-				Name:        phase.PhaseName,
-				Description: phase.PhaseDescription,
-				FormulaID:   arg.FormulaId,
-			})
-			if err != nil {
-				return err
-			}
+
 			updatePhaseTxResult := UpdatePhaseTxResult{
 				Phase:       phaseTxResult,
 				Ingredients: *phaseIngredients,
 			}
 			*formulaPhases = append(*formulaPhases, updatePhaseTxResult)
+		}
+
+		phases, err := q.ListPhasesByFormulaId(ctx, arg.FormulaId)
+		if err != nil {
+			return err
+		}
+		err = DeleteDiscardedIngredientsAndPhases(phases, q, ctx, updateId)
+		if err != nil {
+			return err
 		}
 
 		formulaTxResult, err := q.UpdateFormula(ctx, UpdateFormulaParams{
@@ -150,6 +139,86 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 		return nil
 	})
 	return result, err
+}
+
+func DeleteDiscardedIngredientsAndPhases(phases []Phase, q *Queries, ctx context.Context, updateId uuid.UUID) error {
+	for _, phase := range phases { // TODO add consolidating SQL with join on formulaID -> phase.formulaId instead of
+		err := q.DeleteFormulaIngredientsNotInUpdate(ctx, DeleteFormulaIngredientsNotInUpdateParams{
+			PhaseID:  phase.ID,
+			UpdateID: updateId,
+		})
+		if err != nil {
+			return err
+		}
+		if phase.UpdateID != updateId {
+			err := q.DeletePhase(ctx, phase.ID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func addOrUpdatePhase(q *Queries, phase models.UpdateFullFormulaPhaseParams, ctx context.Context, arg models.UpdateFullFormulaParams, updateId uuid.UUID) (Phase, error) {
+	var err error
+	var phaseTxResult Phase
+	isAddedPhase := phase.PhaseId < 1
+	if isAddedPhase {
+		phaseTxResult, err = q.CreatePhase(ctx, CreatePhaseParams{
+			Name:        phase.PhaseName,
+			Description: phase.PhaseDescription,
+			FormulaID:   arg.FormulaId,
+			UpdateID:    updateId,
+		})
+
+		if err != nil {
+			return Phase{}, err
+		}
+	} else {
+		phaseTxResult, err = q.UpdatePhase(ctx, UpdatePhaseParams{
+			ID:          phase.PhaseId,
+			Name:        phase.PhaseName,
+			Description: phase.PhaseDescription,
+			FormulaID:   arg.FormulaId,
+			UpdateID:    updateId,
+		})
+		if err != nil {
+			return Phase{}, err
+		}
+	}
+	return phaseTxResult, nil
+}
+
+func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormulaIngredientParams, phase models.UpdateFullFormulaPhaseParams, ctx context.Context, updateId uuid.UUID) (FormulaIngredient, error) {
+	var ingredientTxResult FormulaIngredient
+	var err error
+	isNewIngredient := ingredient.FormulaIngredientId == 0
+	if isNewIngredient {
+		formulaIngredientParams := CreateFormulaIngredientParams{
+			IngredientID: ingredient.IngredientId,
+			Percentage:   ingredient.FormulaIngredientPercentage,
+			PhaseID:      phase.PhaseId,
+			Description:  sql.NullString{},
+			UpdateID:     updateId, // TODO potentially keep dangling ingredients in a update post in sql as backup?
+		}
+		ingredientTxResult, err = q.CreateFormulaIngredient(ctx, formulaIngredientParams)
+	} else {
+		params := UpdateFormulaIngredientParams{
+			ID:           ingredient.FormulaIngredientId,
+			IngredientID: ingredient.IngredientId,
+			Percentage:   ingredient.FormulaIngredientPercentage,
+			PhaseID:      phase.PhaseId,
+			Cost:         sql.NullInt32{Int32: ingredient.FormulaIngredientCost, Valid: true},
+			Description:  sql.NullString{},
+			UpdateID:     updateId,
+		}
+		ingredientTxResult, err = q.UpdateFormulaIngredient(ctx, params)
+	}
+	if err != nil {
+		return FormulaIngredient{}, err
+	}
+	return ingredientTxResult, nil
 }
 
 func (userAccount *SQLUserAccount) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {

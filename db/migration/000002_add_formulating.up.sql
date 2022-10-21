@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE "ingredient_functions" (
                                         "id" bigserial PRIMARY KEY,
                                         "name" varchar(25) NOT NULL,
@@ -62,6 +64,7 @@ CREATE TABLE "phases" (
                           "name" varchar(25) NOT NULL,
                           "description" varchar(500) NOT NULL,
                           "formula_id" bigint NOT NULL,
+                          "update_id" uuid NOT NULL DEFAULT uuid_generate_v1(),
                           "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -73,6 +76,7 @@ CREATE TABLE "formula_ingredients" (
                           "description" varchar(250),
                           "phase_id" bigint NOT NULL,
                           "cost" int,
+                          "update_id" uuid NOT NULL DEFAULT uuid_generate_v1(),
                           "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
