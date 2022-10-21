@@ -4,9 +4,10 @@ INSERT INTO formula_ingredients (
                                 percentage,
                                 phase_id,
                                 cost,
-                                description
+                                description,
+                                update_id
 ) VALUES (
-          $1, $2, $3, $4, $5
+          $1, $2, $3, $4, $5, $6
          ) RETURNING *;
 
 -- name: GetFormulaIngredient :one
@@ -24,11 +25,17 @@ SET (ingredient_id,
      percentage,
      phase_id,
      cost,
-    description) =
-        ($2, $3, $4, $5, $6)
+     description,
+     update_id) =
+        ($2, $3, $4, $5, $6, $7)
 WHERE id = $1
 RETURNING *;
 
 -- name: DeleteFormulaIngredient :exec
 DELETE FROM formula_ingredients
 WHERE id = $1;
+
+-- name: DeleteFormulaIngredientsNotInUpdate :exec
+DELETE FROM formula_ingredients
+WHERE phase_id IN ($1)
+AND update_id NOT IN ($2);

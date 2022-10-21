@@ -23,7 +23,7 @@ FROM formulas f
          JOIN phases p on f.id = p.formula_id
          JOIN formula_ingredients fi on p.id = fi.phase_id
          JOIN ingredients i on fi.ingredient_id = i.id
-WHERE f.id = $1;
+WHERE f.id = $1 ORDER BY fi.phase_id;
 
 -- name: ListFormulasByUserId :many
 SELECT * FROM formulas

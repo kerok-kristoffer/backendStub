@@ -85,7 +85,6 @@ func (server Server) updateFormula(ctx *gin.Context) {
 	response := generateFormulaViewModel(fullFormula)
 
 	ctx.JSON(http.StatusOK, response)
-
 }
 
 type addFormulaRequest struct {
