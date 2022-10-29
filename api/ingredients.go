@@ -94,7 +94,7 @@ func (server *Server) getIngredientCount(ctx *gin.Context) {
 
 type listIngredientsRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=100"`
+	PageSize int32 `form:"page_size" binding:"required,min=5,max=250"`
 }
 
 func (server *Server) listIngredients(ctx *gin.Context) {

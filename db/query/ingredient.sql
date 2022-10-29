@@ -26,7 +26,7 @@ OFFSET $2;
 -- name: ListIngredientsByUserId :many
 SELECT * FROM ingredients
     WHERE user_id = $1
-    ORDER BY id
+    ORDER BY name
     LIMIT $2
     OFFSET $3;
 
