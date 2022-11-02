@@ -209,7 +209,7 @@ func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormul
 			IngredientID: ingredient.IngredientId,
 			Percentage:   ingredient.FormulaIngredientPercentage,
 			PhaseID:      phase.PhaseId,
-			Cost:         sql.NullInt32{Int32: ingredient.FormulaIngredientCost, Valid: true},
+			Cost:         sql.NullFloat64{Float64: float64(ingredient.FormulaIngredientCost), Valid: true},
 			Description:  sql.NullString{},
 			UpdateID:     updateId,
 		}

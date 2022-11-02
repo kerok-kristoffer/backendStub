@@ -15,7 +15,7 @@ WHERE id = $1 LIMIT 1;
 -- name: ListPhasesByFormulaId :many
 SELECT * FROM phases
 WHERE formula_id = $1
-ORDER BY id;
+ORDER BY created_at;
 
 -- name: UpdatePhase :one
 UPDATE phases

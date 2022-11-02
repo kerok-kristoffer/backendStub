@@ -24,16 +24,16 @@ func TestGetIngredientsAPI(t *testing.T) {
 
 	ingredients := []db.Ingredient{
 		{Name: "Wind",
-			Cost: sql.NullInt32{
-				Int32: 100,
-				Valid: true,
+			Cost: sql.NullFloat64{
+				Float64: 100,
+				Valid:   true,
 			},
 			UserID: user.ID,
 		},
 		{Name: "Fire",
-			Cost: sql.NullInt32{
-				Int32: 200,
-				Valid: true,
+			Cost: sql.NullFloat64{
+				Float64: 200,
+				Valid:   true,
 			},
 			UserID: user.ID,
 		},

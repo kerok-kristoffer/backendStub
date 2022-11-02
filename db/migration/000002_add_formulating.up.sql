@@ -15,7 +15,7 @@ CREATE TABLE "ingredients" (
                            "hash" varchar(50) NOT NULL,
                            "user_id" bigint NOT NULL,
                            "function_id" bigint,
-                           "cost" int4 DEFAULT 0,
+                           "cost" float4 DEFAULT 0,
                            "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 
@@ -72,10 +72,10 @@ CREATE TABLE "phases" (
 CREATE TABLE "formula_ingredients" (
                           "id" bigserial PRIMARY KEY,
                           "ingredient_id" bigint NOT NULL,
-                          "percentage" int NOT NULL,
+                          "percentage" float4 NOT NULL,
                           "description" varchar(250),
                           "phase_id" bigint NOT NULL,
-                          "cost" int,
+                          "cost" float4,
                           "update_id" uuid NOT NULL DEFAULT uuid_generate_v1(),
                           "created_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
                           "updated_at" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
