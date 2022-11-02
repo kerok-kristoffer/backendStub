@@ -184,7 +184,7 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		Name:       req.Name,
 		Inci:       req.Inci,
 		Hash:       "",
-		Cost:       sql.NullInt32{Int32: int32(req.Cost), Valid: true},
+		Cost:       sql.NullFloat64{Float64: float64(req.Cost), Valid: true},
 		UserID:     user.ID,
 		FunctionID: sql.NullInt64{},
 	}
@@ -309,7 +309,7 @@ func newIngredientResponse(ingredient db.Ingredient, tags []ingredientTagRequest
 		Id:   ingredient.ID,
 		Name: ingredient.Name,
 		Inci: ingredient.Inci,
-		Cost: ingredient.Cost.Int32,
+		Cost: int32(ingredient.Cost.Float64),
 		Tags: tags,
 	}
 }

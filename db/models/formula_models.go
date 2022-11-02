@@ -1,11 +1,11 @@
 package models
 
 type UpdateFullFormulaIngredientParams struct {
-	FormulaIngredientId         int64  `json:"id" binding:"required"`
-	IngredientId                int64  `json:"ingredient_id" binding:"required"`
-	FormulaIngredientPercentage int32  `json:"percentage" binding:"required"`
-	FormulaIngredientName       string `json:"name" binding:"required"`
-	FormulaIngredientCost       int32  `json:"cost" binding:"required"`
+	FormulaIngredientId         int64   `json:"id" binding:"required"`
+	IngredientId                int64   `json:"ingredient_id" binding:"required"`
+	FormulaIngredientPercentage float32 `json:"percentage" binding:"required"`
+	FormulaIngredientName       string  `json:"name" binding:"required"`
+	FormulaIngredientCost       float32 `json:"cost" binding:"required"`
 }
 
 type UpdateFullFormulaPhaseParams struct {
