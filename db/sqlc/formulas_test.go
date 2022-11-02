@@ -22,12 +22,12 @@ func TestUpdateFormulaTx(t *testing.T) {
 	ingredientParams := models.UpdateFullFormulaIngredientParams{
 		FormulaIngredientId:         formulaIngredient.ID,
 		IngredientId:                ingredient.ID,
-		FormulaIngredientPercentage: F.Int32Between(5, 10),
+		FormulaIngredientPercentage: float32(F.RandomFloat(1, 5, 10)),
 		FormulaIngredientName:       ingredient.Name,
 	}
 	ingredientParams2 := models.UpdateFullFormulaIngredientParams{
 		IngredientId:                ingredient2.ID,
-		FormulaIngredientPercentage: F.Int32Between(5, 10),
+		FormulaIngredientPercentage: float32(F.RandomFloat(1, 5, 10)),
 		FormulaIngredientName:       ingredient.Name,
 	}
 	ingredients := []models.UpdateFullFormulaIngredientParams{
@@ -100,7 +100,7 @@ func CreateRandomFormulaIngredient(t *testing.T, ingredientId int64, phaseId int
 
 	params := CreateFormulaIngredientParams{
 		IngredientID: ingredientId,
-		Percentage:   F.Int32Between(25, 50),
+		Percentage:   float32(F.RandomFloat(1, 25, 50)),
 		PhaseID:      phaseId,
 		Description:  sql.NullString{},
 	}
