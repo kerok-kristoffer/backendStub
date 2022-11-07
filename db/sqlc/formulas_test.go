@@ -10,39 +10,51 @@ import (
 
 func TestUpdateFormulaTx(t *testing.T) {
 	userAccount := NewUserAccount(testDB)
-
 	user := CreateRandomUser(t)
 
 	ingredient := createRandomIngredient(t, user.ID)
-	ingredient2 := createRandomIngredient(t, user.ID)
+	ingredientToMoveOnUpdate := createRandomIngredient(t, user.ID)
+	ingredientToRemoveOnUpdate := createRandomIngredient(t, user.ID)
+	ingredientToAddOnUpdate := createRandomIngredient(t, user.ID)
+	newPhaseAddedIngredient := createRandomIngredient(t, user.ID)
+
 	formula := CreateRandomFormula(t, user.ID)
 	phase := CreateRandomPhase(t, formula.ID)
-	formulaIngredient := CreateRandomFormulaIngredient(t, ingredient.ID, phase.ID)
+	phaseToAddOnUpdate := CreateRandomPhase(t, formula.ID)
 
-	ingredientParams := models.UpdateFullFormulaIngredientParams{
-		FormulaIngredientId:         formulaIngredient.ID,
-		IngredientId:                ingredient.ID,
-		FormulaIngredientPercentage: float32(F.RandomFloat(1, 5, 10)),
-		FormulaIngredientName:       ingredient.Name,
-	}
-	ingredientParams2 := models.UpdateFullFormulaIngredientParams{
-		IngredientId:                ingredient2.ID,
-		FormulaIngredientPercentage: float32(F.RandomFloat(1, 5, 10)),
-		FormulaIngredientName:       ingredient.Name,
-	}
+	formulaIngredient := CreateRandomFormulaIngredient(t, ingredient.ID, phase.ID)
+	phaseMoveFormulaIngredient := CreateRandomFormulaIngredient(t, ingredientToMoveOnUpdate.ID, phase.ID)
+	CreateRandomFormulaIngredient(t, ingredientToRemoveOnUpdate.ID, phase.ID)
+
+	ingredientParams := ingredientToUpdateParams(formulaIngredient.ID, ingredient)
+	addIngredientParams := ingredientToUpdateParams(0, ingredientToAddOnUpdate)
+	moveIngredientParams := ingredientToUpdateParams(phaseMoveFormulaIngredient.ID, ingredientToMoveOnUpdate)
 	ingredients := []models.UpdateFullFormulaIngredientParams{
 		ingredientParams,
-		ingredientParams2,
+		addIngredientParams,
 	}
 
-	phaseParams := models.UpdateFullFormulaPhaseParams{
+	addPhaseIngredientParams := ingredientToUpdateParams(0, newPhaseAddedIngredient)
+	newPhaseIngredients := []models.UpdateFullFormulaIngredientParams{
+		addPhaseIngredientParams,
+		moveIngredientParams,
+	}
+
+	originalPhaseParams := models.UpdateFullFormulaPhaseParams{
 		PhaseName:        F.Genre().Name(),
 		PhaseDescription: F.Lorem().Sentence(5),
 		PhaseId:          phase.ID,
 		Ingredients:      ingredients,
 	}
+	addPhaseParams := models.UpdateFullFormulaPhaseParams{
+		PhaseName:        F.Genre().Name(),
+		PhaseDescription: F.Lorem().Sentence(7),
+		PhaseId:          phaseToAddOnUpdate.ID,
+		Ingredients:      newPhaseIngredients,
+	}
 	phases := []models.UpdateFullFormulaPhaseParams{
-		phaseParams,
+		originalPhaseParams,
+		addPhaseParams,
 	}
 
 	fullFormulaUpdateParams := models.UpdateFullFormulaParams{
@@ -57,12 +69,68 @@ func TestUpdateFormulaTx(t *testing.T) {
 
 	tx, err := userAccount.UpdateFullFormulaTx(context.Background(), fullFormulaUpdateParams)
 	require.NoError(t, err)
-
 	require.NotEmpty(t, tx)
-	// TODO kerok: Add asserts on all components
-	// TODO kerok: need to adapt update to include cases where ingredients are added, removed, changed phase, etc.
+
+	compareFormulaProperties(t, fullFormulaUpdateParams, tx)
+	for i, phase := range tx.Phases {
+		formulaPhaseParams := fullFormulaUpdateParams.Phases[i]
+		comparePhaseProperties(t, formulaPhaseParams, phase)
+		fullFormulaIngredientParams := formulaPhaseParams.Ingredients
+		require.Equal(t, len(fullFormulaIngredientParams), len(phase.Ingredients))
+		for j, phaseIngredient := range phase.Ingredients {
+			compareIngredientProperties(t, fullFormulaIngredientParams, j, phaseIngredient, phase)
+		}
+	}
 	// TODO kerok: Add more test scenarios
-	// TODO kerok: delete created test components after tests
+
+	for _, phaseToRemove := range tx.Phases {
+		err = userAccount.DeletePhase(context.Background(), phaseToRemove.Phase.ID)
+		require.Error(t, err)
+
+		for _, ingredientToRemove := range phaseToRemove.Ingredients {
+			err = userAccount.DeleteFormulaIngredient(context.Background(), ingredientToRemove.ID)
+			require.NoError(t, err)
+		}
+		err = userAccount.DeletePhase(context.Background(), phaseToRemove.Phase.ID)
+		require.NoError(t, err)
+	}
+
+	err = userAccount.DeleteFormula(context.Background(), formula.ID)
+	require.NoError(t, err)
+}
+
+func compareIngredientProperties(t *testing.T, fullFormulaIngredientParams []models.UpdateFullFormulaIngredientParams, j int, phaseIngredient FormulaIngredient, phase UpdatePhaseTxResult) {
+	require.Equal(t, fullFormulaIngredientParams[j].IngredientId, phaseIngredient.IngredientID)
+	require.Equal(t, fullFormulaIngredientParams[j].FormulaIngredientPercentage, phaseIngredient.Percentage)
+	require.Equal(t, fullFormulaIngredientParams[j].FormulaIngredientCost, float32(phaseIngredient.Cost.Float64))
+	require.Equal(t, phase.Phase.ID, phaseIngredient.PhaseID)
+}
+
+func comparePhaseProperties(t *testing.T, formulaPhaseParams models.UpdateFullFormulaPhaseParams, phase UpdatePhaseTxResult) {
+	require.Equal(t, formulaPhaseParams.PhaseName, phase.Phase.Name)
+	require.Equal(t, formulaPhaseParams.PhaseId, phase.Phase.ID)
+	require.Equal(t, formulaPhaseParams.PhaseDescription, phase.Phase.Description)
+}
+
+func compareFormulaProperties(t *testing.T, fullFormulaUpdateParams models.UpdateFullFormulaParams, tx UpdateFormulaTxResult) {
+	require.Equal(t, fullFormulaUpdateParams.FormulaId, tx.Formula.ID)
+	require.Equal(t, fullFormulaUpdateParams.FormulaName, tx.Formula.Name)
+	require.Equal(t, fullFormulaUpdateParams.UserId, tx.Formula.UserID)
+	require.Equal(t, fullFormulaUpdateParams.FormulaDescription, tx.Formula.Description)
+	require.Equal(t, fullFormulaUpdateParams.Weight, tx.Formula.DefaultAmount)
+	require.Equal(t, fullFormulaUpdateParams.WeightOz, tx.Formula.DefaultAmountOz)
+	require.Equal(t, len(fullFormulaUpdateParams.Phases), len(tx.Phases))
+}
+
+func ingredientToUpdateParams(formulaIngredientId int64, ingredient Ingredient) models.UpdateFullFormulaIngredientParams {
+	ingredientParams := models.UpdateFullFormulaIngredientParams{
+		FormulaIngredientId:         formulaIngredientId,
+		IngredientId:                ingredient.ID,
+		FormulaIngredientPercentage: float32(F.RandomFloat(1, 5, 10)),
+		FormulaIngredientCost:       float32(F.RandomFloat(2, 50, 1500)),
+		FormulaIngredientName:       ingredient.Name,
+	}
+	return ingredientParams
 }
 
 func CreateRandomFormula(t *testing.T, userId int64) Formula {
