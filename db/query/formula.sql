@@ -36,9 +36,10 @@ SELECT * FROM formulas
 UPDATE formulas
     SET (name,
         default_amount,
+        default_amount_oz,
         description,
         user_id) =
-        ($2, $3, $4, $5)
+        ($2, $3, $4, $5, $6)
     WHERE id = $1
     RETURNING *;
 

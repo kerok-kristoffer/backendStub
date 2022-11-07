@@ -11,6 +11,7 @@ import (
 	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -36,6 +37,23 @@ func TestGetIngredientsAPI(t *testing.T) {
 				Valid:   true,
 			},
 			UserID: user.ID,
+		},
+	}
+
+	expectedIngredientResponse := []ingredientResponse{
+		{
+			Id:   0,
+			Name: "Wind",
+			Inci: "",
+			Cost: 100,
+			Tags: nil,
+		},
+		{
+			Id:   0,
+			Name: "Fire",
+			Inci: "",
+			Cost: 200,
+			Tags: nil,
 		},
 	}
 
@@ -73,7 +91,7 @@ func TestGetIngredientsAPI(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchIngredients(t, ingredients, recorder.Body)
+				requireBodyMatchIngredients(t, expectedIngredientResponse, recorder.Body)
 			},
 		}, {
 			name: "Empty",
@@ -92,7 +110,7 @@ func TestGetIngredientsAPI(t *testing.T) {
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchIngredients(t, []db.Ingredient(nil), recorder.Body)
+				requireBodyMatchIngredients(t, []ingredientResponse(nil), recorder.Body)
 			},
 		},
 	}
@@ -122,14 +140,24 @@ func TestGetIngredientsAPI(t *testing.T) {
 
 }
 
-func requireBodyMatchIngredients(t *testing.T, ingredients []db.Ingredient, body *bytes.Buffer) {
+func requireBodyMatchIngredients(t *testing.T, ingredients []ingredientResponse, body *bytes.Buffer) {
 	data, err := ioutil.ReadAll(body)
 	require.NoError(t, err)
 
-	var gotIngredients []db.Ingredient
+	var gotIngredients []ingredientResponse
 
+	if len(ingredients) == 0 {
+		require.Empty(t, gotIngredients)
+		return
+	}
 	err = json.Unmarshal(data, &gotIngredients)
+	require.NoError(t, err)
 
-	/*require.NoError(t, err)
-	require.Equal(t, ingredients, gotIngredients)*/
+	for i, ingredient := range ingredients {
+
+		log.Println(ingredient.Name)
+
+		require.Equal(t, ingredient, gotIngredients[i])
+	}
+
 }

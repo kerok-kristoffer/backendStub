@@ -122,11 +122,12 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 		}
 
 		formulaTxResult, err := q.UpdateFormula(ctx, UpdateFormulaParams{
-			ID:            arg.FormulaId,
-			Name:          arg.FormulaName,
-			DefaultAmount: arg.Weight,
-			Description:   arg.FormulaDescription,
-			UserID:        arg.UserId,
+			ID:              arg.FormulaId,
+			Name:            arg.FormulaName,
+			DefaultAmount:   arg.Weight,
+			DefaultAmountOz: arg.WeightOz,
+			Description:     arg.FormulaDescription,
+			UserID:          arg.UserId,
 		})
 		if err != nil {
 			return err
@@ -199,6 +200,7 @@ func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormul
 			IngredientID: ingredient.IngredientId,
 			Percentage:   ingredient.FormulaIngredientPercentage,
 			PhaseID:      phase.PhaseId,
+			Cost:         sql.NullFloat64{Float64: float64(ingredient.FormulaIngredientCost), Valid: true},
 			Description:  sql.NullString{},
 			UpdateID:     updateId, // TODO potentially keep dangling ingredients in a update post in sql as backup?
 		}
