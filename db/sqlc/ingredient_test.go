@@ -42,7 +42,7 @@ func TestDeleteIngredientWithConstraint(t *testing.T) {
 
 	err = testQueries.DeleteIngredient(context.Background(), ingredient.ID)
 	require.NoError(t, err)
-	ingredient, err = testQueries.GetIngredient(context.Background(), user.ID)
+	ingredient, err = testQueries.GetIngredient(context.Background(), ingredient.ID)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, ingredient)
