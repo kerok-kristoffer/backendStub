@@ -60,5 +60,4 @@ func TestCreateFormulaApi(t *testing.T) {
 	}
 
 	println(request.Name)
-
 }
