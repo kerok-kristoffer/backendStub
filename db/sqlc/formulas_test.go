@@ -78,7 +78,7 @@ func TestUpdateFormulaTx(t *testing.T) {
 		fullFormulaIngredientParams := formulaPhaseParams.Ingredients
 		require.Equal(t, len(fullFormulaIngredientParams), len(phase.Ingredients))
 		for j, phaseIngredient := range phase.Ingredients {
-			compareIngredientProperties(t, fullFormulaIngredientParams, j, phaseIngredient, phase)
+			compareIngredientProperties(t, fullFormulaIngredientParams[j], phaseIngredient, phase)
 		}
 	}
 	// TODO kerok: Add more test scenarios
@@ -97,12 +97,13 @@ func TestUpdateFormulaTx(t *testing.T) {
 
 	err = userAccount.DeleteFormula(context.Background(), formula.ID)
 	require.NoError(t, err)
+
 }
 
-func compareIngredientProperties(t *testing.T, fullFormulaIngredientParams []models.UpdateFullFormulaIngredientParams, j int, phaseIngredient FormulaIngredient, phase UpdatePhaseTxResult) {
-	require.Equal(t, fullFormulaIngredientParams[j].IngredientId, phaseIngredient.IngredientID)
-	require.Equal(t, fullFormulaIngredientParams[j].FormulaIngredientPercentage, phaseIngredient.Percentage)
-	require.Equal(t, fullFormulaIngredientParams[j].FormulaIngredientCost, float32(phaseIngredient.Cost.Float64))
+func compareIngredientProperties(t *testing.T, fullFormulaIngredientParams models.UpdateFullFormulaIngredientParams, phaseIngredient FormulaIngredient, phase UpdatePhaseTxResult) {
+	require.Equal(t, fullFormulaIngredientParams.IngredientId, phaseIngredient.IngredientID)
+	require.Equal(t, fullFormulaIngredientParams.FormulaIngredientPercentage, phaseIngredient.Percentage)
+	require.Equal(t, fullFormulaIngredientParams.FormulaIngredientCost, float32(phaseIngredient.Cost.Float64))
 	require.Equal(t, phase.Phase.ID, phaseIngredient.PhaseID)
 }
 
