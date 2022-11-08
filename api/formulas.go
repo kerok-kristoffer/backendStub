@@ -156,6 +156,8 @@ type formulaResponse struct {
 	TotalWeight   float64 `json:"totalWeight"`
 	TotalWeightOz float64 `json:"totalWeightInOunces"`
 	Description   string  `json:"description"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
 }
 
 type listFormulasRequest struct {
@@ -249,6 +251,8 @@ func generateFormulaViewModel(fullFormulaIngredients []db.GetFullFormulaRow) for
 		TotalWeight:   float64(fullFormulaInfo.DefaultAmount),
 		TotalWeightOz: float64(fullFormulaInfo.DefaultAmountOz),
 		Description:   fullFormulaInfo.Description,
+		CreatedAt:     fullFormulaInfo.CreatedAt.Format("06-01-02"),
+		UpdatedAt:     fullFormulaInfo.UpdatedAt.Format("06-01-02"),
 	}
 	return formulaResponse
 }

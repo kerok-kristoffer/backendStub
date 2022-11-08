@@ -26,8 +26,9 @@ SET (ingredient_id,
      phase_id,
      cost,
      description,
-     update_id) =
-        ($2, $3, $4, $5, $6, $7)
+     update_id,
+     updated_at) =
+        ($2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
 WHERE id = $1
 RETURNING *;
 
