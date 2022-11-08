@@ -37,9 +37,10 @@ SET (name,
      hash,
      cost,
      user_id,
-     function_id
+     function_id,
+     updated_at
     ) = (
-                 $2, $3, $4, $5, $6, $7)
+                 $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
 WHERE id = $1
 RETURNING *;
 

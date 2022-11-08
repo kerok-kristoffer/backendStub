@@ -15,7 +15,7 @@ SELECT * FROM formulas
 
 -- name: GetFullFormula :many
 SELECT f.id as "formula_id", f.name as "formula_name", f.default_amount, f.default_amount_oz,
-       f.description, f.user_id,
+       f.description, f.user_id, f.created_at, f.updated_at,
        p.name as "phase_name", p.description as "phase_description",
        fi.phase_id, fi.id as "formula_ingredient_id", fi.ingredient_id, fi.cost, fi.percentage,
        i.name as "ingredient_name", i.inci, i.function_id
@@ -28,7 +28,7 @@ WHERE f.id = $1 ORDER BY p.created_at, fi.phase_id;
 -- name: ListFormulasByUserId :many
 SELECT * FROM formulas
     WHERE user_id = $1
-    ORDER BY id
+    ORDER BY name
     LIMIT $2
     OFFSET $3;
 
@@ -38,8 +38,9 @@ UPDATE formulas
         default_amount,
         default_amount_oz,
         description,
-        user_id) =
-        ($2, $3, $4, $5, $6)
+        user_id,
+        updated_at) =
+        ($2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
     WHERE id = $1
     RETURNING *;
 

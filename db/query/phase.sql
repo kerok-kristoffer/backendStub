@@ -22,9 +22,10 @@ UPDATE phases
 SET (name,
      description,
      formula_id,
-     update_id
+     update_id,
+     updated_at
      ) =
-        ($2, $3, $4, $5)
+        ($2, $3, $4, $5, CURRENT_TIMESTAMP)
 WHERE id = $1
 RETURNING *;
 
