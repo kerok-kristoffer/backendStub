@@ -82,9 +82,20 @@ func (server Server) updateFormula(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
-	response := generateFormulaViewModel(fullFormula)
+	phases := generateFormulaViewModelPhases(fullFormula)
 
-	ctx.JSON(http.StatusOK, response)
+	formulaResponse := formulaResponse{
+		ID:            formula.ID,
+		Phases:        phases,
+		Name:          formula.Name,
+		TotalWeight:   float64(formula.DefaultAmount),
+		TotalWeightOz: float64(formula.DefaultAmountOz),
+		Description:   formula.Description,
+		CreatedAt:     formula.CreatedAt.Format("06-01-02"),
+		UpdatedAt:     formula.UpdatedAt.Format("06-01-02"),
+	}
+
+	ctx.JSON(http.StatusOK, formulaResponse)
 }
 
 type addFormulaRequest struct {
@@ -213,14 +224,26 @@ func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Contex
 		}
 
 		if len(fullFormulaIngredients) > 0 {
-			formulaResponse := generateFormulaViewModel(fullFormulaIngredients)
+			phases := generateFormulaViewModelPhases(fullFormulaIngredients)
+
+			formulaResponse := formulaResponse{
+				ID:            formula.ID,
+				Phases:        phases,
+				Name:          formula.Name,
+				TotalWeight:   float64(formula.DefaultAmount),
+				TotalWeightOz: float64(formula.DefaultAmountOz),
+				Description:   formula.Description,
+				CreatedAt:     formula.CreatedAt.Format("06-01-02"),
+				UpdatedAt:     formula.UpdatedAt.Format("06-01-02"),
+			}
+
 			formulaViewModels = append(formulaViewModels, formulaResponse)
 		}
 	}
 	return formulaViewModels, nil
 }
 
-func generateFormulaViewModel(fullFormulaIngredients []db.GetFullFormulaRow) formulaResponse {
+func generateFormulaViewModelPhases(fullFormulaIngredients []db.GetFullFormulaRow) []Phase {
 	var formulaPhases = make(map[int64]Phase)
 	var phase Phase
 
@@ -243,18 +266,7 @@ func generateFormulaViewModel(fullFormulaIngredients []db.GetFullFormulaRow) for
 		*formulaPhaseModels = append(*formulaPhaseModels, phase)
 	}
 
-	fullFormulaInfo := fullFormulaIngredients[0]
-	formulaResponse := formulaResponse{
-		ID:            fullFormulaInfo.FormulaID,
-		Phases:        *formulaPhaseModels,
-		Name:          fullFormulaInfo.FormulaName,
-		TotalWeight:   float64(fullFormulaInfo.DefaultAmount),
-		TotalWeightOz: float64(fullFormulaInfo.DefaultAmountOz),
-		Description:   fullFormulaInfo.Description,
-		CreatedAt:     fullFormulaInfo.CreatedAt.Format("06-01-02"),
-		UpdatedAt:     fullFormulaInfo.UpdatedAt.Format("06-01-02"),
-	}
-	return formulaResponse
+	return *formulaPhaseModels
 }
 
 func getOrCreatePhase(phases map[int64]Phase, ingredient db.GetFullFormulaRow) (Phase, map[int64]Phase) {
