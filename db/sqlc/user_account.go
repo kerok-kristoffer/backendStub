@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/kerok-kristoffer/formulating/db/models"
+	"log"
 )
 
 // UserAccount Interface representing SQL and Mock version
 // Mock is generated as per below automatically in Makefile
 //go:generate mockgen -package mockdb -destination ../mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
-type UserAccount interface { // todo kerok - rename interface at some point?
+type UserAccount interface {
 	Querier
-	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
 	UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error)
 }
 
@@ -92,6 +92,7 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 
 			phaseTxResult, err := addOrUpdatePhase(q, phase, ctx, arg, updateId)
 			if err != nil {
+				log.Println("failed to addOrUpdatePhase:", err)
 				return err
 			}
 			phase.PhaseId = phaseTxResult.ID
@@ -100,6 +101,7 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 			for _, ingredient := range phase.Ingredients {
 				ingredientTxResult, err := addOrUpdateFormulaIngredient(q, ingredient, phase, ctx, updateId)
 				if err != nil {
+					log.Println("failed to addOrUpdateFormulaIngredient:", err)
 					return err
 				}
 				*phaseIngredients = append(*phaseIngredients, ingredientTxResult)
@@ -114,10 +116,12 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 
 		phases, err := q.ListPhasesByFormulaId(ctx, arg.FormulaId)
 		if err != nil {
+			log.Println("failed to listPhasesByFormulaId:", err)
 			return err
 		}
 		err = DeleteDiscardedIngredientsAndPhases(phases, q, ctx, updateId)
 		if err != nil {
+			log.Println("failed to deleteDiscardedIngredientsAndPhases:", err)
 			return err
 		}
 
@@ -130,6 +134,7 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 			UserID:          arg.UserId,
 		})
 		if err != nil {
+			log.Println("failed to updateFormula:", err)
 			return err
 		}
 
@@ -143,7 +148,7 @@ func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg 
 }
 
 func DeleteDiscardedIngredientsAndPhases(phases []Phase, q *Queries, ctx context.Context, updateId uuid.UUID) error {
-	for _, phase := range phases { // TODO add consolidating SQL with join on formulaID -> phase.formulaId instead of
+	for _, phase := range phases { // TODO add consolidated SQL with join on formulaID -> phase.formulaId instead of
 		err := q.DeleteFormulaIngredientsNotInUpdate(ctx, DeleteFormulaIngredientsNotInUpdateParams{
 			PhaseID:  phase.ID,
 			UpdateID: updateId,
@@ -202,9 +207,14 @@ func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormul
 			PhaseID:      phase.PhaseId,
 			Cost:         sql.NullFloat64{Float64: float64(ingredient.FormulaIngredientCost), Valid: true},
 			Description:  sql.NullString{},
-			UpdateID:     updateId, // TODO potentially keep dangling ingredients in a update post in sql as backup?
+			UpdateID:     updateId,
 		}
 		ingredientTxResult, err = q.CreateFormulaIngredient(ctx, formulaIngredientParams)
+		if err != nil {
+			log.Println("failed to CreateFormulaIngredient:", err)
+			return FormulaIngredient{}, err
+		}
+
 	} else {
 		params := UpdateFormulaIngredientParams{
 			ID:           ingredient.FormulaIngredientId,
@@ -216,47 +226,11 @@ func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormul
 			UpdateID:     updateId,
 		}
 		ingredientTxResult, err = q.UpdateFormulaIngredient(ctx, params)
+		if err != nil {
+			log.Println("failed to updateFormulaIngredient:", params)
+			return FormulaIngredient{}, err
+		}
 	}
-	if err != nil {
-		return FormulaIngredient{}, err
-	}
+
 	return ingredientTxResult, nil
-}
-
-func (userAccount *SQLUserAccount) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
-	var result TransferTxResult
-	// TODO kerok - trying out transactions, no current need in project, keep for future reference example
-	err := userAccount.execTx(ctx, func(q *Queries) error {
-		var err error
-
-		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
-			FromUserID: sql.NullInt64{Int64: arg.FromUserID, Valid: true},
-			ToUserID:   sql.NullInt64{Int64: arg.ToUserID, Valid: true},
-			Amount:     sql.NullInt64{Int64: arg.Amount, Valid: true},
-		})
-		if err != nil {
-			return err
-		}
-
-		result.FromEntry, err = q.CreateEntry(ctx, CreateEntryParams{
-			UserID: sql.NullInt64{Int64: arg.FromUserID, Valid: true},
-			Amount: sql.NullInt64{Int64: arg.Amount, Valid: true},
-		})
-		if err != nil {
-			return err
-		}
-
-		result.ToEntry, err = q.CreateEntry(ctx, CreateEntryParams{
-			UserID: sql.NullInt64{Int64: arg.ToUserID, Valid: true},
-			Amount: sql.NullInt64{Int64: arg.Amount, Valid: true},
-		})
-		if err != nil {
-			return err
-		}
-		// TODO update accounts - probably will skip this since I'm not really implementing transfers in this way.
-
-		return nil
-	})
-
-	return result, err
 }

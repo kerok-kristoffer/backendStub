@@ -42,19 +42,21 @@ func (server Server) updateFormula(ctx *gin.Context) {
 	var req updateFormulaRequest
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
-		log.Println(err)
+		log.Println("Failed unMarshalling updateFormulaRequest:", err)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	formula, err := server.userAccount.GetFormula(ctx, req.Id)
 	if err != nil {
+		log.Println("Failed getFormula:", err)
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
 	user, err := server.getAuthenticatedUser(ctx)
 	if err != nil {
+		log.Println("Failed getAuthUser:", err)
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
@@ -80,6 +82,7 @@ func (server Server) updateFormula(ctx *gin.Context) {
 
 	fullFormula, err := server.userAccount.GetFullFormula(ctx, formula.ID)
 	if err != nil {
+		log.Println("Failed getFullFormula:", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 	phases := generateFormulaViewModelPhases(fullFormula)
@@ -248,7 +251,7 @@ func generateFormulaViewModelPhases(fullFormulaIngredients []db.GetFullFormulaRo
 	var phase Phase
 
 	for _, ingredient := range fullFormulaIngredients {
-		phase, formulaPhases = getOrCreatePhase(formulaPhases, ingredient)
+		phase, formulaPhases = getOrCreatePhaseViewModel(formulaPhases, ingredient)
 		formulaIngredientModel := FormulaIngredient{
 			Id:           ingredient.FormulaIngredientID,
 			IngredientId: ingredient.IngredientID,
@@ -269,7 +272,7 @@ func generateFormulaViewModelPhases(fullFormulaIngredients []db.GetFullFormulaRo
 	return *formulaPhaseModels
 }
 
-func getOrCreatePhase(phases map[int64]Phase, ingredient db.GetFullFormulaRow) (Phase, map[int64]Phase) {
+func getOrCreatePhaseViewModel(phases map[int64]Phase, ingredient db.GetFullFormulaRow) (Phase, map[int64]Phase) {
 	phase, exists := phases[ingredient.PhaseID]
 	if exists {
 		return phase, phases
