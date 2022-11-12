@@ -98,6 +98,12 @@ func TestUpdateFormulaTx(t *testing.T) {
 	err = userAccount.DeleteFormula(context.Background(), formula.ID)
 	require.NoError(t, err)
 
+	err = userAccount.DeleteIngredientsByUserId(context.Background(), user.ID)
+	require.NoError(t, err)
+
+	err = userAccount.DeleteUser(context.Background(), user.ID)
+	require.NoError(t, err)
+
 }
 
 func compareIngredientProperties(t *testing.T, fullFormulaIngredientParams models.UpdateFullFormulaIngredientParams, phaseIngredient FormulaIngredient, phase UpdatePhaseTxResult) {
