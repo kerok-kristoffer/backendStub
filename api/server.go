@@ -69,6 +69,7 @@ func (server *Server) setupRouter() {
 	userAuthRoutes.POST("/formulas", server.addFormula)
 	userAuthRoutes.POST("/formulas/:id", server.updateFormula)
 	userAuthRoutes.GET("/formulas", server.listFormulas)
+	userAuthRoutes.DELETE("/formulas/:id", server.deleteFormula)
 
 	// todo kerok - implement separate middleware for admins
 	adminRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))

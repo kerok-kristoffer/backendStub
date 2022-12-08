@@ -8,6 +8,7 @@ import (
 	"github.com/kerok-kristoffer/formulating/token"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type FormulaIngredient struct {
@@ -157,6 +158,60 @@ func (server Server) addFormula(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, response)
 }
 
+func (server *Server) deleteFormula(ctx *gin.Context) {
+
+	formulaId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	validateFormula, err := server.userAccount.GetFormula(ctx, formulaId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	user, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+	if validateFormula.UserID != user.ID {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	// todo consolidate below to a fullDeleteFormula SQL Query
+	formulaIngredients, err := server.userAccount.GetFullFormula(ctx, formulaId)
+	for _, ingredient := range formulaIngredients {
+		err := server.userAccount.DeleteFormulaIngredient(ctx, ingredient.FormulaIngredientID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+	phasesByFormulaId, err := server.userAccount.ListPhasesByFormulaId(ctx, formulaId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	for _, phase := range phasesByFormulaId {
+		err := server.userAccount.DeletePhase(ctx, phase.ID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+
+	err = server.userAccount.DeleteFormula(ctx, formulaId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
+}
+
 func (server Server) getAuthenticatedUser(ctx *gin.Context) (db.User, error) {
 	authPayLoad := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	user, err := server.userAccount.GetUserByUserName(ctx, authPayLoad.Username)
@@ -241,9 +296,46 @@ func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Contex
 			}
 
 			formulaViewModels = append(formulaViewModels, formulaResponse)
+		} else {
+			phases, err := generateEmptyFormulaViewModelPhases(formula.ID, ctx, server)
+			if err != nil {
+				return nil, err
+			}
+			formulaResponse := formulaResponse{
+				ID:            formula.ID,
+				Phases:        phases,
+				Name:          formula.Name,
+				TotalWeight:   float64(formula.DefaultAmount),
+				TotalWeightOz: float64(formula.DefaultAmountOz),
+				Description:   formula.Description,
+				CreatedAt:     formula.CreatedAt.Format("06-01-02"),
+				UpdatedAt:     formula.UpdatedAt.Format("06-01-02"),
+			}
+			formulaViewModels = append(formulaViewModels, formulaResponse)
 		}
 	}
 	return formulaViewModels, nil
+}
+
+func generateEmptyFormulaViewModelPhases(formulaId int64, ctx *gin.Context, server Server) ([]Phase, error) {
+
+	phases, err := server.userAccount.ListPhasesByFormulaId(ctx, formulaId)
+	if err != nil {
+		return nil, err
+	}
+	formulaPhaseModels := new([]Phase)
+
+	for _, phase := range phases {
+		formulaIngredients := new([]FormulaIngredient)
+		*formulaPhaseModels = append(*formulaPhaseModels, Phase{
+			ID:                 phase.ID,
+			Name:               phase.Name,
+			FormulaIngredients: *formulaIngredients,
+			Description:        phase.Description,
+		})
+	}
+
+	return *formulaPhaseModels, nil
 }
 
 func generateFormulaViewModelPhases(fullFormulaIngredients []db.GetFullFormulaRow) []Phase {
