@@ -13,6 +13,7 @@ type Config struct { // mapstructure refers to app.env
 	AccessTokenDuration  time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	AllowOrigin          string        `mapstructure:"ALLOW_ORIGIN"`
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
+	StripeKey            string        `mapstructure:"STRIPE_KEY"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

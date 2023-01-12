@@ -8,13 +8,148 @@ import (
 	db "github.com/kerok-kristoffer/formulating/db/sqlc"
 	"github.com/kerok-kristoffer/formulating/token"
 	"github.com/kerok-kristoffer/formulating/util"
+	"github.com/kerok-kristoffer/formulating/util/access"
 	"github.com/lib/pq"
+	"github.com/stripe/stripe-go/v74"
+	"github.com/stripe/stripe-go/v74/checkout/session"
+	"github.com/stripe/stripe-go/v74/customer"
 	"net/http"
 	"time"
 )
 
 type getUserRequest struct {
-	ID int64 `uri:"id" binding:"required,min=1"`
+	UserID int64 `uri:"id" binding:"required,min=1"`
+}
+
+type applySubscriptionRequest struct {
+	PriceID    string `uri:"price_id" json:"price_id" binding:"required,min=1"`
+	SuccessUrl string `json:"success_url" uri:"success_url" binding:"required,min=1"`
+	CancelUrl  string `json:"cancel_url" uri:"cancel_url" binding:"required,min=1"`
+}
+
+func (server *Server) applySubscription(ctx *gin.Context) {
+
+	authenticatedUser, err := server.getAuthenticatedUser(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	}
+
+	var req applySubscriptionRequest
+	err = ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	// TODO: before pushing backend and frontend
+	// TODO test new request parameters, email, succ and cancel,
+	// TODO run migrations on live db
+
+	// TODO verify that redirects work on live page
+	// TODO add restrictions on access depending on sub level
+
+	stripe.Key = server.config.StripeKey
+
+	priceId := req.PriceID // todo: add to front-end, comes from product page on Stripe dashboard
+	stripeTestCustomerEmail := authenticatedUser.Email
+	stripeTestCustomerName := authenticatedUser.UserName
+
+	stripePlanInternal, err := server.userAccount.GetStripePlanByUserAccess(ctx, access.NONE)
+	stripeUserData, err := server.userAccount.GetStripeByUserId(ctx, authenticatedUser.ID)
+	if err == sql.ErrNoRows {
+		stripeUserData, err = server.userAccount.CreateStripeEntry(ctx, db.CreateStripeEntryParams{
+			ID:           uuid.New(),
+			UserID:       authenticatedUser.ID,
+			StripePlanID: stripePlanInternal.ID, // todo kerok fix StripePlanId implementation!
+		})
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+
+	} else if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	stripeCustomerParams := &stripe.CustomerParams{
+		Email: stripe.String(stripeTestCustomerEmail),
+		Name:  stripe.String(stripeTestCustomerName),
+	}
+
+	var stripeCustomer *stripe.Customer
+	if stripeUserData.StripeCustomerID.Valid == false {
+		stripeCustomer, err = customer.New(stripeCustomerParams)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	} else {
+		stripeCustomer, err = customer.Get(stripeUserData.StripeCustomerID.String, nil)
+		if err != nil {
+			stripeCustomer, err = customer.New(stripeCustomerParams)
+			if err != nil {
+				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+				return
+			}
+		}
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
+	}
+
+	stripeUserData, err = server.userAccount.UpdateStripeByUserId(ctx, db.UpdateStripeByUserIdParams{
+		UserID:           authenticatedUser.ID,
+		StripeCustomerID: sql.NullString{String: stripeCustomer.ID, Valid: true},
+		StripePlanID:     stripePlanInternal.ID,
+	}) // Todo kerok : temporary using random generated stripePlanId since we only have one
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err)) // Todo kerok : this really shouldn't be allowed to happen, do we need a rollback if it does?!
+		return
+	}
+	// todo kerok : stripe plan update needs to be done after a success is retrieved from Stripe
+	// todo kerok : there should be support for checking if a Customer's purchase went through in the API
+	// todo kerok : We should probably check this and update status every time we authenticate the user
+
+	stripeCheckoutSessionParams := &stripe.CheckoutSessionParams{ // todo kerok : set up the sub portal link on front-end
+		Customer:   stripe.String(stripeCustomer.ID),
+		SuccessURL: stripe.String(req.SuccessUrl), // todo kerok : set up success and cancel pages on front-end
+		CancelURL:  stripe.String(req.CancelUrl),
+		Mode:       stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		LineItems: []*stripe.CheckoutSessionLineItemParams{
+			&stripe.CheckoutSessionLineItemParams{
+				Price:    stripe.String(priceId),
+				Quantity: stripe.Int64(1),
+			},
+		},
+	}
+
+	checkoutSession, err := session.New(stripeCheckoutSessionParams)
+
+	// todo kerok : add database table for subscriptions, tied to user.ID *DONE*
+	// todo kerok: set up subLvl table to keep track of the different products
+	// todo: perhaps keep the list of available subs to fetch from the front-end here.
+	// todo kerok : needed for storing things like stripe.CustomerID, subscriptionLevel, etc...
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, stripeCheckoutRedirectResponse{
+		ID:  checkoutSession.ID,
+		URL: checkoutSession.URL,
+	})
+	//ctx.Redirect(http.StatusSeeOther, checkoutSession.URL)
+}
+
+type stripeCheckoutRedirectResponse struct {
+	ID  string `form:"id"`
+	URL string `form:"url"`
+}
+
+func (server *Server) getSubscriptions(ctx *gin.Context) {
+
 }
 
 func (server *Server) getUserAccount(ctx *gin.Context) {
@@ -27,7 +162,7 @@ func (server *Server) getUserAccount(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	user, err := server.userAccount.GetUser(ctx, req.ID)
+	user, err := server.userAccount.GetUser(ctx, req.UserID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
