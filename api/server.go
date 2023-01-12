@@ -58,6 +58,9 @@ func (server *Server) setupRouter() {
 	userAuthRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
 	userAuthRoutes.GET("/:id", server.getUserAccount)
 
+	userAuthRoutes.GET("/sub", server.getSubscriptions)
+	userAuthRoutes.POST("/sub", server.applySubscription)
+
 	userAuthRoutes.POST("/functions", server.addIngredientFunction)
 	userAuthRoutes.GET("/functions", server.listIngredientFunctions)
 	userAuthRoutes.POST("/ingredients", server.addIngredient)
@@ -71,7 +74,7 @@ func (server *Server) setupRouter() {
 	userAuthRoutes.GET("/formulas", server.listFormulas)
 	userAuthRoutes.DELETE("/formulas/:id", server.deleteFormula)
 
-	// todo kerok - implement separate middleware for admins
+	// todo kerok - implement separate middleware for admins and add checks on subscription level
 	adminRoutes := router.Group("/users").Use(authMiddleware(server.tokenMaker))
 	adminRoutes.GET("/", server.listUsers)
 
