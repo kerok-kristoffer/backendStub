@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -51,11 +52,20 @@ func EqCreateUserParams(arg db.CreateUserParams, password string) gomock.Matcher
 
 func TestCreateUserAPI(t *testing.T) {
 	user, password, err := randomUserWithPassword()
+
+	dummyTester := db.Tester{
+		ID:        0,
+		UserID:    sql.NullInt64{Int64: user.ID, Valid: true},
+		Email:     user.Email,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 	require.NoError(t, err)
 
 	testCases := []struct {
 		name          string
 		body          gin.H
+		setupAuth     func(t *testing.T, request *http.Request, tokenMaker token.Maker)
 		buildStubs    func(account *mockdb.MockUserAccount)
 		checkResponse func(recorder *httptest.ResponseRecorder)
 	}{
@@ -67,6 +77,9 @@ func TestCreateUserAPI(t *testing.T) {
 				"fullName": user.FullName,
 				"email":    user.Email,
 			},
+			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
+				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.UserName, time.Minute)
+			},
 			buildStubs: func(account *mockdb.MockUserAccount) {
 				userParams := db.CreateUserParams{
 					FullName: user.FullName,
@@ -77,10 +90,29 @@ func TestCreateUserAPI(t *testing.T) {
 					CreateUser(gomock.Any(), EqCreateUserParams(userParams, password)).
 					Times(1).
 					Return(user, nil)
+				account.EXPECT().GetTesterByEmail(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(dummyTester, nil)
+				account.EXPECT().UpdateTester(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(dummyTester, nil)
+				account.EXPECT().CreateSession(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.Session{
+						ID:           uuid.New(),
+						UserName:     user.UserName,
+						RefreshToken: "bearer a",
+						UserAgent:    "...",
+						ClientIp:     "0.0.0.0",
+						IsBlocked:    false,
+						ExpiresAt:    time.Now().Add(time.Duration(100)),
+						CreatedAt:    time.Now(),
+					}, nil)
+
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
-				requireBodyMatchUser(t, recorder.Body, user)
+				requireRegisterUserMatchBody(t, recorder.Body, user)
 			},
 		},
 		// TODO: add more cases
@@ -105,6 +137,8 @@ func TestCreateUserAPI(t *testing.T) {
 			url := "/users"
 			request, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 			require.NoError(t, err)
+
+			tc.setupAuth(t, request, server.tokenMaker)
 
 			server.router.ServeHTTP(recorder, request)
 			tc.checkResponse(recorder)
@@ -248,6 +282,18 @@ func TestGetUserAccountAPI(t *testing.T) {
 
 // todo kerok - add tests for login
 // todo kerok - implement test for listUsers route after implementing admin middleware and listUsers api endpoint
+
+func requireRegisterUserMatchBody(t *testing.T, body *bytes.Buffer, user db.User) {
+	data, err := ioutil.ReadAll(body)
+	require.NoError(t, err)
+
+	var loginUserResponse loginUserResponse
+	err = json.Unmarshal(data, &loginUserResponse)
+	require.NoError(t, err)
+	require.Equal(t, user.UserName, loginUserResponse.User.UserName)
+	require.Equal(t, user.Email, loginUserResponse.User.Email)
+	require.Equal(t, user.FullName, loginUserResponse.User.FullName)
+}
 
 func requireBodyMatchUser(t *testing.T, body *bytes.Buffer, user db.User) {
 	data, err := ioutil.ReadAll(body)

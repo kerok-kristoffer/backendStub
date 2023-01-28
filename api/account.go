@@ -14,6 +14,7 @@ import (
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
 	"github.com/stripe/stripe-go/v74/customer"
+	"log"
 	"net/http"
 	"time"
 )
