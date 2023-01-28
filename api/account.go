@@ -14,7 +14,6 @@ import (
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
 	"github.com/stripe/stripe-go/v74/customer"
-	"log"
 	"net/http"
 	"time"
 )
@@ -35,17 +34,12 @@ func (server *Server) applySubscription(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 	}
-
 	var req applySubscriptionRequest
 	err = ctx.ShouldBindJSON(&req)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	// TODO: before pushing backend and frontend
-	// TODO test new request parameters, email, succ and cancel,
-	// TODO run migrations on live db
-
 	// TODO verify that redirects work on live page
 	// TODO add restrictions on access depending on sub level
 
@@ -358,7 +352,6 @@ func (server Server) loginValidatedUser(ctx *gin.Context, user db.User) (loginUs
 	}
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.UserName, server.config.RefreshTokenDuration)
-
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return loginUserResponse{}, true
