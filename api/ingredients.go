@@ -109,6 +109,7 @@ func (server *Server) listIngredients(ctx *gin.Context) {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
+	// TODO check user_access_id > 0, the same for listFormulas
 
 	arg := ingredientByUserParams(user, req)
 
