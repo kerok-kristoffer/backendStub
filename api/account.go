@@ -246,6 +246,12 @@ func (server Server) createUser(ctx *gin.Context) {
 		return
 	}
 
+	tester, err := server.userAccount.GetTesterByEmail(ctx, req.Email)
+	if err != nil {
+		ctx.JSON(http.StatusForbidden, errorResponse(fmt.Errorf("email not registered as tester")))
+		return
+	}
+
 	hashedPassword, err := util.HashPassword(req.Password)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -272,11 +278,27 @@ func (server Server) createUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, newUserResponse(user))
+	_, err = server.userAccount.UpdateTester(ctx, db.UpdateTesterParams{
+		ID:     tester.ID,
+		Email:  tester.Email,
+		UserID: sql.NullInt64{Int64: user.ID, Valid: true},
+	})
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	response, done := server.loginValidatedUser(ctx, user)
+	if done {
+		return // TODO refactor this ugly thing
+	}
+
+	ctx.JSON(http.StatusOK, response)
 }
 
 type loginUserRequest struct {
-	UserName string `json:"userName" binding:"required,alphanum"`
+	UserName string `json:"userName" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
 }
 
@@ -296,14 +318,17 @@ func (server *Server) loginUser(ctx *gin.Context) { // todo kerok - add tests fo
 		return
 	}
 
-	user, err := server.userAccount.GetUserByUserName(ctx, req.UserName) // todo kerok - add support for login by email
+	user, err := server.userAccount.GetUserByUserName(ctx, req.UserName)
 	if err != nil {
+		user, err = server.userAccount.GetUserByUserEmail(ctx, req.UserName)
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+			return
+		}
 	}
 
 	err = util.CheckPassword(req.Password, user.Hash)
@@ -312,23 +337,32 @@ func (server *Server) loginUser(ctx *gin.Context) { // todo kerok - add tests fo
 		return
 	}
 
+	response, done := server.loginValidatedUser(ctx, user)
+	if done {
+		return
+	}
+	ctx.JSON(http.StatusOK, response)
+
+}
+
+func (server Server) loginValidatedUser(ctx *gin.Context, user db.User) (loginUserResponse, bool) {
 	accessToken, accessPayload, err := server.tokenMaker.CreateToken(
 		user.UserName,
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		return loginUserResponse{}, true
 	}
 
 	refreshToken, refreshPayload, err := server.tokenMaker.CreateToken(user.UserName, server.config.RefreshTokenDuration)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		return loginUserResponse{}, true
 	}
-
-	session, err := server.userAccount.CreateSession(ctx, db.CreateSessionParams{
+	// TODO add access_level from stripe_plans table, either to session or straight to user
+	userSession, err := server.userAccount.CreateSession(ctx, db.CreateSessionParams{
 		ID:           refreshPayload.ID,
 		UserName:     user.UserName,
 		RefreshToken: refreshToken,
@@ -339,17 +373,16 @@ func (server *Server) loginUser(ctx *gin.Context) { // todo kerok - add tests fo
 	})
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
+		return loginUserResponse{}, true
 	}
 
 	response := loginUserResponse{
-		SessionId:             session.ID,
+		SessionId:             userSession.ID,
 		AccessToken:           accessToken,
 		AccessTokenExpiresAt:  accessPayload.ExpiresAt,
 		RefreshToken:          refreshToken,
 		RefreshTokenExpiresAt: refreshPayload.ExpiresAt,
 		User:                  newUserResponse(user),
 	}
-	ctx.JSON(http.StatusOK, response)
-
+	return response, false
 }

@@ -107,7 +107,7 @@ type addFormulaRequest struct {
 	Name          string  `json:"name" binding:"required"`
 	TotalWeight   float32 `json:"totalWeight" binding:"required"`
 	TotalWeightOz float32 `json:"totalWeightInOunces" binding:"required"`
-	Description   string  `json:"description" binding:"required"`
+	Description   string  `json:"description"`
 }
 
 func (server Server) addFormula(ctx *gin.Context) {
