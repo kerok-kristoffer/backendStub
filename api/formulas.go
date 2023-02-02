@@ -27,16 +27,16 @@ type Phase struct {
 	ID                 int64               `json:"id" binding:"required"`
 	Name               string              `json:"name" binding:"required"`
 	FormulaIngredients []FormulaIngredient `json:"ingredients" binding:"required"`
-	Description        string              `json:"description" binding:"required"`
+	Description        string              `json:"description" binding:""`
 }
 
 type updateFormulaRequest struct {
 	Id            int64                                 `json:"id" binding:"required"`
 	Phases        []models.UpdateFullFormulaPhaseParams `json:"phases" binding:"required"`
 	Name          string                                `json:"name" binding:"required"`
-	TotalWeight   float32                               `json:"totalWeight" binding:"required"`
-	TotalWeightOz float32                               `json:"totalWeightInOunces" binding:"required"`
-	Description   string                                `json:"description" binding:"required"`
+	TotalWeight   float32                               `json:"totalWeight" binding:""`
+	TotalWeightOz float32                               `json:"totalWeightInOunces" binding:""`
+	Description   string                                `json:"description" binding:""`
 }
 
 func (server Server) updateFormula(ctx *gin.Context) {
