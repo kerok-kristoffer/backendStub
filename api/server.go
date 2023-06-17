@@ -7,9 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	db "github.com/kerok-kristoffer/formulating/db/sqlc"
-	"github.com/kerok-kristoffer/formulating/token"
-	"github.com/kerok-kristoffer/formulating/util"
+	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
+	"github.com/kerok-kristoffer/backendStub/token"
+	"github.com/kerok-kristoffer/backendStub/util"
 )
 
 type Server struct {

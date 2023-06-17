@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/kerok-kristoffer/formulating/db/models"
+	"github.com/kerok-kristoffer/backendStub/db/models"
 	"log"
 )
 
 // UserAccount Interface representing SQL and Mock version
 // Mock is generated as per below automatically in Makefile
-//go:generate mockgen -package mockdb -destination ../mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
+//
+//go:generate mockgen -package mockdb -destination ../mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
 type UserAccount interface {
 	Querier
 	UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error)
