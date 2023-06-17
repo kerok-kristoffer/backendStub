@@ -1,7 +1,7 @@
 package api
 
 import (
-	db "github.com/kerok-kristoffer/formulating/db/sqlc"
+	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

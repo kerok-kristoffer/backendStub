@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	db "github.com/kerok-kristoffer/formulating/db/sqlc"
-	"github.com/kerok-kristoffer/formulating/token"
-	"github.com/kerok-kristoffer/formulating/util"
-	"github.com/kerok-kristoffer/formulating/util/access"
+	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
+	"github.com/kerok-kristoffer/backendStub/token"
+	"github.com/kerok-kristoffer/backendStub/util"
+	"github.com/kerok-kristoffer/backendStub/util/access"
 	"github.com/lib/pq"
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
@@ -42,7 +42,6 @@ func (server *Server) applySubscription(ctx *gin.Context) {
 	}
 	// TODO verify that redirects work on live page
 	// TODO add restrictions on access depending on sub level
-
 	stripe.Key = server.config.StripeKey
 
 	priceId := req.PriceID // todo: add to front-end, comes from product page on Stripe dashboard

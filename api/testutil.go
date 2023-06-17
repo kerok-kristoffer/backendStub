@@ -2,8 +2,8 @@ package api
 
 import (
 	"github.com/jaswdr/faker"
-	db "github.com/kerok-kristoffer/formulating/db/sqlc"
-	"github.com/kerok-kristoffer/formulating/util"
+	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
+	"github.com/kerok-kristoffer/backendStub/util"
 )
 
 func randomUserWithPassword() (db.User, string, error) {

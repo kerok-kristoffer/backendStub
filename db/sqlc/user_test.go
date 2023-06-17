@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
-	"github.com/kerok-kristoffer/formulating/util"
+	"github.com/kerok-kristoffer/backendStub/util"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
