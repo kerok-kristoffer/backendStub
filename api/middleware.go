@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/kerok-kristoffer/formulating/token"
+	"github.com/kerok-kristoffer/backendStub/token"
 	"net/http"
 	"strings"
 )

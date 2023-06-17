@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	db "github.com/kerok-kristoffer/formulating/db/sqlc"
+	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
 )
 
 type addFunctionRequest struct {

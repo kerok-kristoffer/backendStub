@@ -53,7 +53,7 @@ jobs:
           export PATH=$PATH:$(go env GOPATH)/bin
           go mod download github.com/golang/mock
           go mod download github.com/google/uuid
-          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/formulating/db/sqlc UserAccount
+          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
 
       - name: Tidy
         run: go mod tidy

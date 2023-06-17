@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/kerok-kristoffer/formulating/util"
+	"github.com/kerok-kristoffer/backendStub/util"
 )
 
 // sample validator to demonstrate custom validators for api calls seen in #14 in tut

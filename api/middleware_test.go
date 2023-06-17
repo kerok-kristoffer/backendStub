@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/kerok-kristoffer/formulating/token"
+	"github.com/kerok-kristoffer/backendStub/token"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
