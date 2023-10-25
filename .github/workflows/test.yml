@@ -49,13 +49,6 @@ jobs:
       - name: Download Go modules
         run: go mod download
 
-      - name: Generate mockgen UserAccount
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          go mod download github.com/golang/mock
-          go mod download github.com/google/uuid
-          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
-
       - name: Build
         run: go build ./...
       - name: Run migrations
