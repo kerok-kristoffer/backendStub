@@ -28,8 +28,8 @@ func TestCreateFormulaApi(t *testing.T) {
 
 	require.NotEmpty(t, ingredient)
 
-	var formulaIngredients []FormulaIngredient
-	formulaIngredient := FormulaIngredient{
+	var formulaIngredients []db.FullFormulaIngredient
+	formulaIngredient := db.FullFormulaIngredient{
 		Id:             0,
 		IngredientId:   2,
 		Name:           "",
@@ -42,8 +42,8 @@ func TestCreateFormulaApi(t *testing.T) {
 	}
 	formulaIngredients = append(formulaIngredients, formulaIngredient)
 
-	var phases []Phase
-	phaseA := Phase{
+	var phases []db.FullFormulaPhase
+	phaseA := db.FullFormulaPhase{
 		ID:                 0,
 		Name:               "TestCreateFormulaApiPhaseA",
 		FormulaIngredients: formulaIngredients,

@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Sqlc
-        run: go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
       - name: Generate Sqlc
         run: sqlc generate
