@@ -50,6 +50,8 @@ func (server *Server) setupRouter() {
 	router := gin.Default()
 
 	router.Use(corsMiddleware())
+	router.GET("/", server.status)
+	router.GET("/version", server.versionCheck)
 
 	router.POST("/users", server.createUser)
 	router.POST("/users/login", server.loginUser)

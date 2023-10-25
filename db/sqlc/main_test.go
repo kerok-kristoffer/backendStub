@@ -16,7 +16,7 @@ var F = faker.New()
 var testDB *sql.DB
 
 func TestMain(m *testing.M) {
-	// todo: Add test files for remaining models
+	// todo: Add test files for remaining formula
 
 	config, err := util.LoadConfig("../..")
 	if err != nil {

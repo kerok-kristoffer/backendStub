@@ -14,6 +14,7 @@ import (
 	"github.com/stripe/stripe-go/v74"
 	"github.com/stripe/stripe-go/v74/checkout/session"
 	"github.com/stripe/stripe-go/v74/customer"
+	"log"
 	"net/http"
 	"time"
 )
@@ -121,7 +122,6 @@ func (server *Server) applySubscription(ctx *gin.Context) {
 
 	checkoutSession, err := session.New(stripeCheckoutSessionParams)
 
-	// todo kerok : add database table for subscriptions, tied to user.ID *DONE*
 	// todo kerok: set up subLvl table to keep track of the different products
 	// todo: perhaps keep the list of available subs to fetch from the front-end here.
 	// todo kerok : needed for storing things like stripe.CustomerID, subscriptionLevel, etc...
@@ -149,9 +149,6 @@ func (server *Server) getSubscriptions(ctx *gin.Context) {
 
 func (server *Server) getUserAccount(ctx *gin.Context) {
 	// todo kerok - refactor this and server.go - concept of UserAccount from tut might not fit my purposes?
-	// in tut#22, at around 18m, implement corresponding middleware authentication for routes listing ingredients, recipes, etc. (instead of accounts like in tut)
-	// listing users might use a different middleware for admin, etc.
-	// could add a listFollowers or listFriends when adding social media functionality to site.
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -230,6 +227,40 @@ func newUserResponse(user db.User) userResponse {
 		FullName:  user.FullName,
 		CreatedAt: user.CreatedAt,
 	}
+}
+
+type statusResponse struct {
+	Message string `json:"message"`
+}
+type statusCheckRequest struct {
+}
+
+func (server Server) status(ctx *gin.Context) {
+	var req statusCheckRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, statusResponse{
+		Message: "Access OK",
+	})
+}
+
+type versionCheckResponse struct {
+	Version float64 `json:"version"`
+}
+
+func (server Server) versionCheck(ctx *gin.Context) {
+
+	version, err := server.userAccount.GetLatestVersion(ctx)
+	if err != nil {
+		log.Println("Error in getting version: ", err)
+		ctx.JSON(http.StatusConflict, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, versionCheckResponse{Version: version.Number.Float64})
 }
 
 func (server Server) createUser(ctx *gin.Context) {

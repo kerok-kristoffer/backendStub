@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/kerok-kristoffer/backendStub/db/models"
 	"log"
 )
 
@@ -15,7 +14,7 @@ import (
 //go:generate mockgen -package mockdb -destination ../mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
 type UserAccount interface {
 	Querier
-	UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error)
+	UpdateFullFormulaTx(ctx context.Context, arg UpdateFullFormulaParams) (UpdateFormulaTxResult, error)
 }
 
 type PhaseModel struct {
@@ -83,7 +82,7 @@ type UpdateFormulaTxResult struct {
 	Phases  []UpdatePhaseTxResult `json:"phases"`
 }
 
-func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg models.UpdateFullFormulaParams) (UpdateFormulaTxResult, error) {
+func (userAccount *SQLUserAccount) UpdateFullFormulaTx(ctx context.Context, arg UpdateFullFormulaParams) (UpdateFormulaTxResult, error) {
 	var result UpdateFormulaTxResult
 
 	updateId := uuid.New()
@@ -167,7 +166,7 @@ func DeleteDiscardedIngredientsAndPhases(phases []Phase, q *Queries, ctx context
 	return nil
 }
 
-func addOrUpdatePhase(q *Queries, phase models.UpdateFullFormulaPhaseParams, ctx context.Context, arg models.UpdateFullFormulaParams, updateId uuid.UUID) (Phase, error) {
+func addOrUpdatePhase(q *Queries, phase UpdateFullFormulaPhaseParams, ctx context.Context, arg UpdateFullFormulaParams, updateId uuid.UUID) (Phase, error) {
 	var err error
 	var phaseTxResult Phase
 	isAddedPhase := phase.PhaseId < 1
@@ -197,7 +196,7 @@ func addOrUpdatePhase(q *Queries, phase models.UpdateFullFormulaPhaseParams, ctx
 	return phaseTxResult, nil
 }
 
-func addOrUpdateFormulaIngredient(q *Queries, ingredient models.UpdateFullFormulaIngredientParams, phase models.UpdateFullFormulaPhaseParams, ctx context.Context, updateId uuid.UUID) (FormulaIngredient, error) {
+func addOrUpdateFormulaIngredient(q *Queries, ingredient UpdateFullFormulaIngredientParams, phase UpdateFullFormulaPhaseParams, ctx context.Context, updateId uuid.UUID) (FormulaIngredient, error) {
 	var ingredientTxResult FormulaIngredient
 	var err error
 	isNewIngredient := ingredient.FormulaIngredientId == 0

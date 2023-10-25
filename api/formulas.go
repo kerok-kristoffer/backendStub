@@ -3,7 +3,6 @@ package api
 import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
-	"github.com/kerok-kristoffer/backendStub/db/models"
 	db "github.com/kerok-kristoffer/backendStub/db/sqlc"
 	"github.com/kerok-kristoffer/backendStub/token"
 	"log"
@@ -11,32 +10,13 @@ import (
 	"strconv"
 )
 
-type FormulaIngredient struct {
-	Id             int64   `json:"id"`
-	IngredientId   int64   `json:"ingredient_id" binding:"required"`
-	Name           string  `json:"name" binding:"required"`
-	Inci           string  `json:"inci" binding:"required"`
-	Percentage     float32 `json:"percentage" binding:"required"`
-	WeightInGrams  float32 `json:"weightInGrams" binding:"required"`
-	WeightInOunces float32 `json:"weightInOunces" binding:"required"`
-	Cost           float32 `json:"cost"  binding:"required"`
-	Description    string  `json:"description" binding:"required"`
-}
-
-type Phase struct {
-	ID                 int64               `json:"id" binding:"required"`
-	Name               string              `json:"name" binding:"required"`
-	FormulaIngredients []FormulaIngredient `json:"ingredients" binding:"required"`
-	Description        string              `json:"description" binding:""`
-}
-
 type updateFormulaRequest struct {
-	Id            int64                                 `json:"id" binding:"required"`
-	Phases        []models.UpdateFullFormulaPhaseParams `json:"phases" binding:"required"`
-	Name          string                                `json:"name" binding:"required"`
-	TotalWeight   float32                               `json:"totalWeight" binding:""`
-	TotalWeightOz float32                               `json:"totalWeightInOunces" binding:""`
-	Description   string                                `json:"description" binding:""`
+	Id            int64                             `json:"id" binding:"required"`
+	Phases        []db.UpdateFullFormulaPhaseParams `json:"phases" binding:"required"`
+	Name          string                            `json:"name" binding:"required"`
+	TotalWeight   float32                           `json:"totalWeight" binding:""`
+	TotalWeightOz float32                           `json:"totalWeightInOunces" binding:""`
+	Description   string                            `json:"description" binding:""`
 }
 
 func (server Server) updateFormula(ctx *gin.Context) {
@@ -67,7 +47,7 @@ func (server Server) updateFormula(ctx *gin.Context) {
 		return
 	}
 
-	_, err = server.userAccount.UpdateFullFormulaTx(ctx, models.UpdateFullFormulaParams{
+	_, err = server.userAccount.UpdateFullFormulaTx(ctx, db.UpdateFullFormulaParams{
 		FormulaId:          req.Id,
 		FormulaName:        req.Name,
 		Weight:             req.TotalWeight,
@@ -86,9 +66,9 @@ func (server Server) updateFormula(ctx *gin.Context) {
 		log.Println("Failed getFullFormula:", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
-	phases := generateFormulaViewModelPhases(fullFormula)
+	phases := db.GenerateFormulaViewModelPhases(fullFormula)
 
-	formulaResponse := formulaResponse{
+	formulaResponse := db.FormulaResponse{
 		ID:            formula.ID,
 		Phases:        phases,
 		Name:          formula.Name,
@@ -103,11 +83,11 @@ func (server Server) updateFormula(ctx *gin.Context) {
 }
 
 type addFormulaRequest struct {
-	Phases        []Phase `json:"phases" binding:"required"`
-	Name          string  `json:"name" binding:"required"`
-	TotalWeight   float32 `json:"totalWeight" binding:"required"`
-	TotalWeightOz float32 `json:"totalWeightInOunces" binding:"required"`
-	Description   string  `json:"description"`
+	Phases        []db.Phase `json:"phases" binding:"required"`
+	Name          string     `json:"name" binding:"required"`
+	TotalWeight   float32    `json:"totalWeight" binding:"required"`
+	TotalWeightOz float32    `json:"totalWeightInOunces" binding:"required"`
+	Description   string     `json:"description"`
 }
 
 func (server Server) addFormula(ctx *gin.Context) {
@@ -132,7 +112,7 @@ func (server Server) addFormula(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 
-	var response formulaResponse
+	var response db.FormulaResponse
 	phases := req.Phases
 	for i := range req.Phases {
 		phaseRequest := req.Phases[i]
@@ -142,7 +122,7 @@ func (server Server) addFormula(ctx *gin.Context) {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-		var ingredients []FormulaIngredient
+		var ingredients []db.FormulaIngredient
 
 		for _, ingredient := range phaseRequest.FormulaIngredients {
 			formulaIngredientParams := CreateIngredientParamsFromRequest(ingredient, savedPhase)
@@ -218,17 +198,6 @@ func (server Server) getAuthenticatedUser(ctx *gin.Context) (db.User, error) {
 	return user, err
 }
 
-type formulaResponse struct {
-	ID            int64   `json:"id" binding:"required"`
-	Phases        []Phase `json:"phases"`
-	Name          string  `json:"name"`
-	TotalWeight   float64 `json:"totalWeight"`
-	TotalWeightOz float64 `json:"totalWeightInOunces"`
-	Description   string  `json:"description"`
-	CreatedAt     string  `json:"created_at"`
-	UpdatedAt     string  `json:"updated_at"`
-}
-
 type listFormulasRequest struct {
 	PageId   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
@@ -273,8 +242,9 @@ func (server Server) listFormulas(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, formulaViewModels)
 }
 
-func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Context) ([]formulaResponse, error) {
-	var formulaViewModels []formulaResponse
+// TODO At some point, extract these to a dedicated service, and refactor
+func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Context) ([]db.FormulaResponse, error) {
+	var formulaViewModels []db.FormulaResponse
 	for _, formula := range formulas {
 		fullFormulaIngredients, err := server.userAccount.GetFullFormula(ctx, formula.ID)
 		if err != nil {
@@ -282,9 +252,9 @@ func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Contex
 		}
 
 		if len(fullFormulaIngredients) > 0 {
-			phases := generateFormulaViewModelPhases(fullFormulaIngredients)
+			phases := db.GenerateFormulaViewModelPhases(fullFormulaIngredients)
 
-			formulaResponse := formulaResponse{
+			formulaResponse := db.FormulaResponse{
 				ID:            formula.ID,
 				Phases:        phases,
 				Name:          formula.Name,
@@ -301,7 +271,7 @@ func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Contex
 			if err != nil {
 				return nil, err
 			}
-			formulaResponse := formulaResponse{
+			formulaResponse := db.FormulaResponse{
 				ID:            formula.ID,
 				Phases:        phases,
 				Name:          formula.Name,
@@ -317,17 +287,17 @@ func makeFormulaViewModels(formulas []db.Formula, server Server, ctx *gin.Contex
 	return formulaViewModels, nil
 }
 
-func generateEmptyFormulaViewModelPhases(formulaId int64, ctx *gin.Context, server Server) ([]Phase, error) {
+func generateEmptyFormulaViewModelPhases(formulaId int64, ctx *gin.Context, server Server) ([]db.Phase, error) {
 
 	phases, err := server.userAccount.ListPhasesByFormulaId(ctx, formulaId)
 	if err != nil {
 		return nil, err
 	}
-	formulaPhaseModels := new([]Phase)
+	formulaPhaseModels := new([]db.Phase)
 
 	for _, phase := range phases {
-		formulaIngredients := new([]FormulaIngredient)
-		*formulaPhaseModels = append(*formulaPhaseModels, Phase{
+		formulaIngredients := new([]db.FormulaIngredient)
+		*formulaPhaseModels = append(*formulaPhaseModels, db.Phase{
 			ID:                 phase.ID,
 			Name:               phase.Name,
 			FormulaIngredients: *formulaIngredients,
@@ -338,54 +308,9 @@ func generateEmptyFormulaViewModelPhases(formulaId int64, ctx *gin.Context, serv
 	return *formulaPhaseModels, nil
 }
 
-func generateFormulaViewModelPhases(fullFormulaIngredients []db.GetFullFormulaRow) []Phase {
-	var formulaPhases = make(map[int64]Phase)
-	var phase Phase
+func newFormulaResponse(formula db.Formula, phases []db.Phase) db.FormulaResponse {
 
-	for _, ingredient := range fullFormulaIngredients {
-		phase, formulaPhases = getOrCreatePhaseViewModel(formulaPhases, ingredient)
-		formulaIngredientModel := FormulaIngredient{
-			Id:           ingredient.FormulaIngredientID,
-			IngredientId: ingredient.IngredientID,
-			Name:         ingredient.IngredientName,
-			Inci:         ingredient.Inci,
-			Percentage:   ingredient.Percentage,
-			Cost:         float32((ingredient.Cost).Float64),
-		}
-		phase.FormulaIngredients = append(phase.FormulaIngredients, formulaIngredientModel)
-		formulaPhases[ingredient.PhaseID] = phase
-	}
-
-	formulaPhaseModels := new([]Phase)
-	for _, phase := range formulaPhases {
-		*formulaPhaseModels = append(*formulaPhaseModels, phase)
-	}
-
-	return *formulaPhaseModels
-}
-
-func getOrCreatePhaseViewModel(phases map[int64]Phase, ingredient db.GetFullFormulaRow) (Phase, map[int64]Phase) {
-	phase, exists := phases[ingredient.PhaseID]
-	if exists {
-		return phase, phases
-	}
-
-	formulaIngredients := new([]FormulaIngredient)
-	phase = Phase{
-		ID:                 ingredient.PhaseID,
-		Name:               ingredient.PhaseName,
-		FormulaIngredients: *formulaIngredients,
-		Description:        ingredient.PhaseDescription,
-	}
-
-	phases[ingredient.PhaseID] = phase
-	return phase, phases
-
-}
-
-func newFormulaResponse(formula db.Formula, phases []Phase) formulaResponse {
-
-	return formulaResponse{
+	return db.FormulaResponse{
 		ID:            formula.ID,
 		Phases:        phases,
 		Name:          formula.Name,
@@ -395,7 +320,7 @@ func newFormulaResponse(formula db.Formula, phases []Phase) formulaResponse {
 	}
 }
 
-func CreateIngredientParamsFromRequest(ingredient FormulaIngredient, savedPhase db.Phase) db.CreateFormulaIngredientParams {
+func CreateIngredientParamsFromRequest(ingredient db.FormulaIngredient, savedPhase db.Phase) db.CreateFormulaIngredientParams {
 	formulaIngredientParams := db.CreateFormulaIngredientParams{
 		IngredientID: ingredient.IngredientId,
 		Percentage:   ingredient.Percentage,
@@ -409,7 +334,7 @@ func CreateIngredientParamsFromRequest(ingredient FormulaIngredient, savedPhase 
 	return formulaIngredientParams
 }
 
-func createPhaseParamsFromRequest(phase Phase, id int64) db.CreatePhaseParams {
+func createPhaseParamsFromRequest(phase db.Phase, id int64) db.CreatePhaseParams {
 	phaseParams := db.CreatePhaseParams{
 		Name:        phase.Name,
 		Description: phase.Description,

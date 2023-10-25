@@ -26,3 +26,7 @@ RETURNING *;
 -- name: DeleteIngredientTagMap :exec
 DELETE FROM ingredient_tag_maps
 WHERE id = $1;
+
+-- name: DeleteIngredientTagMapByIngredientId :exec
+DELETE FROM ingredient_tag_maps
+WHERE ingredient_id = $1;
