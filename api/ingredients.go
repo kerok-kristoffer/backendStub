@@ -180,6 +180,8 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		return
 	}
 
+	// TODO ingredient id should be taken from param like in delete: ingredientId, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+
 	params := db.UpdateIngredientParams{
 		ID:         req.Id,
 		Name:       req.Name,
@@ -196,9 +198,17 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	// update tags
-	var tags []ingredientTagRequest
-	for _, tag := range req.Tags {
+	// update newTags
+	var newTags []ingredientTagRequest
+	newTags, done := updateTags(server, ctx, req.Id, req.Tags, user, ingredient, newTags)
+	if done {
+		return
+	}
+	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, newTags))
+}
+
+func updateTags(server *Server, ctx *gin.Context, Id int64, oldTags []ingredientTagRequest, user db.User, ingredient db.Ingredient, tags []ingredientTagRequest) ([]ingredientTagRequest, bool) {
+	for _, tag := range oldTags {
 
 		ingredientTag, err := server.userAccount.GetIngredientTagByName(ctx, db.GetIngredientTagByNameParams{
 			Name:   tag.Name,
@@ -212,11 +222,11 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 				})
 				if err != nil {
 					ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-					return
+					return nil, true
 				}
 			} else {
 				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-				return
+				return nil, true
 			}
 		}
 
@@ -228,30 +238,30 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 		if err == sql.ErrNoRows {
 			_, err := server.userAccount.CreateIngredientTagMap(ctx, db.CreateIngredientTagMapParams{
 				IngredientTagID: ingredientTag.ID,
-				IngredientID:    req.Id,
+				IngredientID:    Id,
 			})
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-				return
+				return nil, true
 			}
 		} else if err != nil {
 			ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-			return
+			return nil, true
 		}
 
 	}
 
-	tagMaps, err := server.userAccount.ListIngredientTagsByIngredientId(ctx, req.Id)
+	tagMaps, err := server.userAccount.ListIngredientTagsByIngredientId(ctx, Id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 	}
 	// TODO: Remove existing ingredient_tag_map with current ingredient_id if not in tags table.
 	for _, tagMap := range tagMaps {
-		if !isInProvidedTags(req.Tags, tagMap.IngredientTag) {
+		if !isInProvidedTags(oldTags, tagMap.IngredientTag) {
 			err := server.userAccount.DeleteIngredientTagMap(ctx, tagMap.IngredientTagMapsID)
 			if err != nil {
 				ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-				return
+				return nil, true
 			}
 		}
 		tags = append(tags, ingredientTagRequest{
@@ -259,7 +269,7 @@ func (server *Server) updateIngredient(ctx *gin.Context) {
 			Name: tagMap.IngredientTag,
 		})
 	}
-	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, tags))
+	return tags, false
 }
 
 func isInProvidedTags(tags []ingredientTagRequest, str string) bool {
@@ -293,8 +303,10 @@ func makeViewModel(ingredients []db.Ingredient) []ingredientResponse {
 }
 
 type addIngredientRequest struct {
-	Name string `json:"name" binding:"required"`
-	Inci string `json:"inci"`
+	Name string                 `json:"name" binding:"required"`
+	Inci string                 `json:"inci"`
+	Cost int                    `json:"cost"`
+	Tags []ingredientTagRequest `json:"tags" binding:"required"`
 }
 
 type ingredientResponse struct {
@@ -315,7 +327,7 @@ func newIngredientResponse(ingredient db.Ingredient, tags []ingredientTagRequest
 	}
 }
 
-func (server Server) addIngredient(ctx *gin.Context) {
+func (server *Server) addIngredient(ctx *gin.Context) {
 	var req addIngredientRequest
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -333,6 +345,7 @@ func (server Server) addIngredient(ctx *gin.Context) {
 		Name:   req.Name,
 		Inci:   req.Inci,
 		Hash:   "",
+		Cost:   sql.NullFloat64{Float64: float64(req.Cost), Valid: true},
 		UserID: user.ID,
 	}
 
@@ -343,8 +356,12 @@ func (server Server) addIngredient(ctx *gin.Context) {
 		return
 	}
 
-	var noTags []ingredientTagRequest
-	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, noTags))
+	var newTags []ingredientTagRequest
+	newTags, done := updateTags(server, ctx, ingredient.ID, req.Tags, user, ingredient, newTags)
+	if done {
+		return
+	}
+	ctx.JSON(http.StatusOK, newIngredientResponse(ingredient, newTags))
 }
 
 func (server *Server) deleteIngredient(ctx *gin.Context) {
@@ -368,6 +385,12 @@ func (server *Server) deleteIngredient(ctx *gin.Context) {
 	}
 	if validateIngredient.UserID != user.ID {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	err = server.userAccount.DeleteIngredientTagMapByIngredientId(ctx, ingredientId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
 

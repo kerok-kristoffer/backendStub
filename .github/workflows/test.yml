@@ -29,34 +29,28 @@ jobs:
           --health-retries 5
 
     steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.18.3
+          go-version: 1.21.4
         id: go
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+      - name: Cache Go Modules
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-      - name: Install Sqlc
-        run: go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+      - name: Download Go modules
+        run: go mod download
 
-      - name: Generate Sqlc
-        run: sqlc generate
-
-      - name: Install mockgen
-        run: go install github.com/golang/mock/mockgen@v1.6.0
-
-      - name: Generate mockgen UserAccount
-        run: |
-          export PATH=$PATH:$(go env GOPATH)/bin
-          go mod download github.com/golang/mock
-          go mod download github.com/google/uuid
-          mockgen -package mockdb -destination db/mock/user_account.go github.com/kerok-kristoffer/backendStub/db/sqlc UserAccount
-
-      - name: Tidy
-        run: go mod tidy
+      - name: Build
+        run: go build ./...
 
       - name: Install golang-migrate
         run: |
